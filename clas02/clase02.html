@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML5 · Formularios, Estructura y CSS · Prof. Luis Vásquez · Fundabit Isla de Coche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--c1:#ff6b6b;--c2:#4ecdc4;--c3:#ffe66d;--c4:#a06cd5;--c5:#5ee7df;--wa1:#25D366;--wa2:#128C7E;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;font-family:'Nunito',system-ui,sans-serif;background:#0b0a1f;color:#fff;}
+body::before{content:'';position:fixed;inset:-20%;background:radial-gradient(circle at 20% 25%,rgba(160,108,213,.40),transparent 45%),radial-gradient(circle at 80% 70%,rgba(78,205,196,.30),transparent 45%),radial-gradient(circle at 50% 100%,rgba(255,107,107,.25),transparent 50%);animation:blobFloat 20s ease-in-out infinite alternate;z-index:0;pointer-events:none;}
+@keyframes blobFloat{from{transform:translate(0,0) scale(1);}to{transform:translate(-4%,4%) scale(1.15);}}
+.progress{position:fixed;top:0;left:0;width:100%;height:5px;background:rgba(255,255,255,.07);z-index:100;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--c1),var(--c3),var(--c2),var(--c4));background-size:300% 100%;animation:gradShift 4s linear infinite;transition:width .45s cubic-bezier(.34,1.4,.64,1);box-shadow:0 0 14px rgba(78,205,196,.8);}
+@keyframes gradShift{to{background-position:300% 0;}}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:99;background:linear-gradient(180deg,rgba(11,10,31,.92),rgba(11,10,31,0));pointer-events:none;}
+.eval-title{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.9rem,2vw,1.2rem);letter-spacing:1px;background:linear-gradient(135deg,#ffe66d,#ff6b6b,#4ecdc4);background-size:200% 200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradShift 6s ease infinite;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));display:flex;align-items:center;gap:8px;pointer-events:auto;}
+.eval-title .dot-ev{width:10px;height:10px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 12px #ff6b6b;animation:pulse 1.5s ease-in-out infinite;}
+.counter{font-family:'Fredoka',sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:8px;pointer-events:auto;}
+.counter b{color:#4ecdc4;font-size:1.05rem;}
+.lock-badge{display:none;align-items:center;gap:4px;font-size:.7rem;padding:2px 8px;background:rgba(255,230,109,.15);border:1px solid rgba(255,230,109,.4);border-radius:999px;color:#ffe66d;letter-spacing:.5px;}
+.lock-badge.show{display:inline-flex;}
+.brand{position:fixed;bottom:16px;left:22px;z-index:100;background:#fff;border-radius:12px;padding:6px 12px;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px;}
+.brand img{height:36px;display:block;}
+.slide-footer{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.62rem,1.4vw,.82rem);letter-spacing:2px;color:rgba(94,231,223,.55);text-transform:uppercase;pointer-events:none;z-index:5;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.slide-footer::before,.slide-footer::after{content:'';width:24px;height:1px;background:linear-gradient(90deg,transparent,rgba(94,231,223,.5),transparent);}
+.slide-footer b{color:rgba(255,230,109,.85);font-weight:700;}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(15,10,40,.96);color:#fff;padding:1rem 1.6rem;border-radius:16px;font-family:'Fredoka',sans-serif;font-size:clamp(.9rem,2vw,1.1rem);z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;border:1px solid rgba(255,230,109,.35);box-shadow:0 12px 40px rgba(0,0,0,.6);max-width:80vw;text-align:center;line-height:1.4;white-space:pre-line;}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.deck{position:relative;width:100vw;height:100vh;z-index:1;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:7vh 4vw 11vh;text-align:center;opacity:0;visibility:hidden;transform:scale(.92) translateY(20px);transition:opacity .5s,transform .5s cubic-bezier(.34,1.3,.64,1),visibility .5s;overflow-y:auto;scrollbar-width:none;}
+.slide::-webkit-scrollbar{display:none;}
+.slide.active{opacity:1;visibility:visible;transform:scale(1) translateY(0);}
+.slide.active .anim{animation:popIn .65s cubic-bezier(.34,1.56,.64,1) both;animation-delay:var(--d,0s);}
+@keyframes popIn{from{opacity:0;transform:translateY(34px) scale(.88);}to{opacity:1;transform:translateY(0) scale(1);}}
+h1,h2,h3{font-family:'Fredoka',sans-serif;line-height:1.15;}
+h2{font-size:clamp(1.3rem,3.6vw,2.3rem);font-weight:700;margin-bottom:.5rem;}
+.lead{font-size:clamp(.88rem,2vw,1.2rem);color:rgba(255,255,255,.82);margin-bottom:.7rem;}
+.emoji{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1;margin-bottom:.5rem;}
+.emoji.big{font-size:clamp(2.4rem,6vw,4rem);}
+.cover-title{font-size:clamp(2rem,8vw,5.2rem);font-weight:700;letter-spacing:-.02em;line-height:.95;}
+.grad{background:linear-gradient(135deg,#ff6b6b,#ffe66d,#4ecdc4,#a06cd5,#ff6b6b);background-size:300% 300%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradShift 6s ease infinite;}
+.cover-sub{font-size:clamp(.95rem,2.2vw,1.3rem);margin-top:.6rem;color:rgba(255,255,255,.85);font-weight:700;}
+.prof-tag{display:inline-flex;align-items:center;gap:.5rem;margin-top:.9rem;padding:.55rem 1.4rem;border-radius:999px;background:linear-gradient(135deg,rgba(255,230,109,.16),rgba(160,108,213,.16));border:1px solid rgba(255,230,109,.5);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.85rem,2vw,1.1rem);color:#ffe66d;letter-spacing:1px;}
+.prof-tag .prof-icon{font-size:1.15em;}
+.badge{display:inline-block;padding:6px 18px;border-radius:999px;background:rgba(78,205,196,.15);border:1px solid rgba(78,205,196,.5);color:#5ee7df;font-size:clamp(.7rem,1.6vw,.9rem);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.3rem;}
+.cards{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;width:100%;max-width:1120px;}
+.card{flex:1 1 190px;max-width:300px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:1rem .95rem;backdrop-filter:blur(8px);transition:transform .3s,box-shadow .3s,border-color .3s;}
+.card:hover{transform:translateY(-9px) scale(1.03);border-color:rgba(78,205,196,.65);box-shadow:0 14px 40px rgba(78,205,196,.22);}
+.card h3{font-size:clamp(.95rem,1.9vw,1.15rem);margin-bottom:.35rem;color:#ffe66d;}
+.card p{font-size:clamp(.75rem,1.55vw,.92rem);color:rgba(255,255,255,.8);line-height:1.5;}
+.fact{margin-top:1rem;background:rgba(255,230,109,.1);border-left:5px solid #ffe66d;border-radius:12px;padding:.8rem 1.2rem;font-size:clamp(.82rem,1.8vw,1.05rem);max-width:820px;text-align:left;color:rgba(255,255,255,.92);}
+.tags{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.1rem;max-width:900px;}
+.tag{font-family:'Courier New',monospace;background:rgba(160,108,213,.18);border:1px solid rgba(160,108,213,.55);color:#d6bcff;padding:7px 14px;border-radius:999px;font-size:clamp(.72rem,1.7vw,.95rem);}
+.code{font-family:'Courier New',monospace;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:14px 18px;margin-top:.9rem;font-size:clamp(.7rem,1.6vw,.95rem);color:#5ee7df;white-space:pre;text-align:left;max-width:900px;width:100%;overflow-x:auto;box-shadow:inset 0 0 30px rgba(78,205,196,.08);line-height:1.55;}
+.code .tag-h{color:#ff8f8f;}
+.code .tag-a{color:#ffe66d;}
+.code .tag-v{color:#7dffcf;}
+.code .comment{color:rgba(255,255,255,.4);font-style:italic;}
+.specs-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .9rem;margin-top:.8rem;width:100%;max-width:920px;text-align:left;}
+.specs-grid .k{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.72rem,1.55vw,.9rem);color:#5ee7df;background:rgba(94,231,223,.08);padding:.5rem .85rem;border-radius:10px;border:1px solid rgba(94,231,223,.3);display:flex;align-items:center;gap:.4rem;}
+.specs-grid .v{font-size:clamp(.68rem,1.45vw,.85rem);color:rgba(255,255,255,.9);background:rgba(255,255,255,.04);padding:.5rem .85rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;}
+.specs-grid .v b{color:#fff;}
+.tree-diagram{background:rgba(0,0,0,.35);border:1px solid rgba(94,231,223,.3);border-radius:14px;padding:1rem 1.2rem;margin-top:1rem;max-width:760px;width:100%;text-align:left;font-family:'Courier New',monospace;font-size:clamp(.7rem,1.5vw,.9rem);line-height:1.6;color:#d6bcff;}
+.tree-diagram .lvl1{color:#ffe66d;}
+.tree-diagram .lvl2{color:#5ee7df;}
+.tree-diagram .lvl3{color:#7dfff0;}
+.tree-diagram .lvl4{color:#ffb0b0;}
+
+/* ---------- SIMULADOR DE FORMULARIOS ---------- */
+.form-builder{display:grid;grid-template-columns:200px 1fr 1fr;gap:.8rem;width:100%;max-width:1180px;margin-top:.7rem;}
+.fb-panel{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);border-radius:16px;padding:.75rem;display:flex;flex-direction:column;gap:.5rem;}
+.fb-panel h4{font-family:'Fredoka',sans-serif;font-size:clamp(.78rem,1.6vw,.92rem);color:#ffe66d;letter-spacing:1px;margin-bottom:.15rem;text-transform:uppercase;}
+.fb-palette{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.fb-btn{font-family:'Nunito',sans-serif;font-weight:700;font-size:clamp(.6rem,1.3vw,.75rem);padding:.55rem .35rem;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;gap:.15rem;line-height:1.1;}
+.fb-btn span:first-child{font-size:1.1em;}
+.fb-btn:hover{background:rgba(78,205,196,.25);border-color:#4ecdc4;transform:translateY(-2px);}
+.fb-clear{grid-column:1/-1;background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.5);color:#ffb0b0;padding:.5rem;}
+.fb-clear:hover{background:rgba(255,107,107,.35);border-color:#ff6b6b;}
+
+.fb-preview{background:rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.14);border-radius:16px;padding:.85rem;min-height:280px;overflow-y:auto;max-height:340px;text-align:left;}
+.fb-preview .preview-title{font-family:'Fredoka',sans-serif;font-size:.78rem;color:#5ee7df;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.5rem;}
+#demoForm{display:flex;flex-direction:column;gap:.55rem;}
+.demo-field{display:flex;flex-direction:column;gap:.25rem;}
+.demo-field label{font-family:'Fredoka',sans-serif;font-size:.72rem;font-weight:700;color:rgba(255,255,255,.85);}
+.demo-field input,.demo-field select,.demo-field textarea{font-family:'Nunito',sans-serif;font-size:.82rem;padding:.5rem .7rem;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;width:100%;}
+.demo-field textarea{min-height:60px;resize:vertical;}
+.demo-checkbox,.demo-radio{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:rgba(255,255,255,.9);cursor:pointer;}
+.demo-checkbox input,.demo-radio input{width:auto;accent-color:#4ecdc4;}
+.demo-radio-group{display:flex;gap:.7rem;flex-wrap:wrap;}
+.demo-submit{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.85rem;padding:.6rem 1.1rem;border-radius:10px;border:none;background:linear-gradient(135deg,#4ecdc4,#a06cd5);color:#fff;cursor:pointer;transition:.25s;}
+.demo-submit:hover{transform:translateY(-2px);}
+.fb-empty{color:rgba(255,255,255,.4);font-size:.78rem;text-align:center;padding:1.5rem 0;font-style:italic;}
+
+/* Temas del simulador */
+.fb-preview.theme-neon{background:linear-gradient(135deg,#0a001a,#1a0033);border-color:#ff00ff;}
+.fb-preview.theme-neon .demo-field label{color:#ff00ff;text-shadow:0 0 8px #ff00ff;font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase;}
+.fb-preview.theme-neon .demo-field input,.fb-preview.theme-neon .demo-field select,.fb-preview.theme-neon .demo-field textarea{background:rgba(255,0,255,.08);border-color:#00ffff;color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.4);font-family:'Courier New',monospace;}
+.fb-preview.theme-neon .demo-submit{background:linear-gradient(135deg,#ff00ff,#00ffff);color:#000;box-shadow:0 0 20px #ff00ff;font-family:'Courier New',monospace;letter-spacing:2px;}
+.fb-preview.theme-minimal{background:#f5f5f5;border-color:#ccc;}
+.fb-preview.theme-minimal .preview-title{color:#333;}
+.fb-preview.theme-minimal .demo-field label{color:#111;font-family:'Nunito',sans-serif;font-weight:900;}
+.fb-preview.theme-minimal .demo-field input,.fb-preview.theme-minimal .demo-field select,.fb-preview.theme-minimal .demo-field textarea{background:#fff;border:1px solid #ddd;color:#111;border-radius:4px;}
+.fb-preview.theme-minimal .demo-submit{background:#111;color:#fff;border-radius:4px;}
+.fb-preview.theme-minimal .demo-checkbox,.fb-preview.theme-minimal .demo-radio{color:#111;}
+.fb-preview.theme-retro{background:linear-gradient(135deg,#fdf6e3,#f5e6c8);border:3px double #8b4513;}
+.fb-preview.theme-retro .preview-title{color:#8b4513;font-family:'Courier New',monospace;}
+.fb-preview.theme-retro .demo-field label{color:#5d3a1a;font-family:'Courier New',monospace;font-weight:900;}
+.fb-preview.theme-retro .demo-field input,.fb-preview.theme-retro .demo-field select,.fb-preview.theme-retro .demo-field textarea{background:#fffef5;border:2px solid #8b4513;color:#3d2010;border-radius:0;font-family:'Courier New',monospace;}
+.fb-preview.theme-retro .demo-submit{background:#8b4513;color:#fdf6e3;border-radius:0;border:2px solid #5d3a1a;font-family:'Courier New',monospace;letter-spacing:1px;}
+.fb-preview.theme-retro .demo-checkbox,.fb-preview.theme-retro .demo-radio{color:#5d3a1a;font-family:'Courier New',monospace;}
+
+.fb-code{background:rgba(0,0,0,.55);border:1.5px solid rgba(94,231,223,.35);border-radius:16px;padding:.85rem;overflow-y:auto;max-height:340px;text-align:left;}
+.fb-code .preview-title{font-family:'Fredoka',sans-serif;font-size:.78rem;color:#5ee7df;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.5rem;}
+#demoCode{font-family:'Courier New',monospace;font-size:clamp(.62rem,1.3vw,.78rem);color:#d6bcff;white-space:pre;line-height:1.5;}
+#demoCode .c-tag{color:#ff8f8f;}
+#demoCode .c-attr{color:#ffe66d;}
+#demoCode .c-val{color:#7dffcf;}
+#demoCode .c-txt{color:#fff;}
+
+.theme-switcher{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.9rem;}
+.theme-btn{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.72rem,1.5vw,.88rem);padding:.5rem 1.1rem;border-radius:999px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:.25s;}
+.theme-btn:hover{background:rgba(78,205,196,.2);border-color:#4ecdc4;transform:translateY(-2px);}
+.theme-btn.active{background:linear-gradient(135deg,#4ecdc4,#a06cd5);border-color:transparent;box-shadow:0 6px 20px rgba(78,205,196,.5);}
+
+@media(max-width:960px){
+  .form-builder{grid-template-columns:1fr;gap:.6rem;}
+  .fb-preview,.fb-code{max-height:220px;min-height:180px;}
+  .fb-palette{grid-template-columns:repeat(4,1fr);}
+  .specs-grid{grid-template-columns:1fr;}
+}
+
+/* ---------- DECISIÓN, QUIZ Y DEMÁS ---------- */
+.decision-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1.6rem;width:100%;max-width:780px;}
+.decision-btn{font-family:'Fredoka',sans-serif;padding:1.6rem 1.2rem;border-radius:20px;border:2px solid;cursor:pointer;transition:all .3s;display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center;}
+.decision-btn:hover{transform:translateY(-8px) scale(1.03);}
+.decision-btn .dec-icon{font-size:clamp(2.2rem,5vw,3.2rem);line-height:1;}
+.decision-btn .dec-title{font-size:clamp(1rem,2.2vw,1.35rem);font-weight:700;letter-spacing:1px;}
+.decision-btn .dec-desc{font-size:clamp(.72rem,1.5vw,.88rem);font-family:'Nunito';font-weight:700;opacity:.9;line-height:1.4;}
+.decision-btn.exam{background:linear-gradient(135deg,rgba(37,211,102,.28),rgba(78,205,196,.18));border-color:rgba(37,211,102,.75);color:#7dffcf;box-shadow:0 12px 36px rgba(37,211,102,.35);}
+.decision-btn.exam:hover{background:linear-gradient(135deg,rgba(37,211,102,.5),rgba(78,205,196,.4));color:#fff;}
+.decision-btn.review{background:linear-gradient(135deg,rgba(94,231,223,.25),rgba(160,108,213,.2));border-color:rgba(94,231,223,.75);color:#7dfff0;box-shadow:0 12px 36px rgba(94,231,223,.35);}
+.decision-btn.review:hover{background:linear-gradient(135deg,rgba(94,231,223,.5),rgba(160,108,213,.4));color:#fff;}
+
+.voice-btn{position:fixed;bottom:22px;right:88px;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:linear-gradient(135deg,rgba(78,205,196,.9),rgba(160,108,213,.9));color:#fff;font-size:1.35rem;cursor:pointer;z-index:101;display:grid;place-items:center;box-shadow:0 8px 24px rgba(78,205,196,.5);transition:all .3s;}
+.voice-btn:hover{transform:scale(1.12);}
+.voice-btn.off{background:linear-gradient(135deg,rgba(120,120,140,.55),rgba(60,60,80,.55));color:rgba(255,255,255,.55);}
+.voice-btn.speaking{animation:voicePulse 1.1s ease-in-out infinite;}
+@keyframes voicePulse{0%,100%{box-shadow:0 8px 24px rgba(78,205,196,.5);}50%{box-shadow:0 8px 36px rgba(78,205,196,1);}}
+.replay-btn{position:fixed;bottom:22px;right:150px;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:linear-gradient(135deg,rgba(255,230,109,.9),rgba(255,107,107,.9));color:#0b0a1f;font-size:1.35rem;cursor:pointer;z-index:101;display:grid;place-items:center;box-shadow:0 8px 24px rgba(255,230,109,.45);transition:all .3s;}
+.replay-btn:hover{transform:scale(1.12) rotate(-20deg);}
+.replay-btn.spinning{animation:spinOnce .55s ease-in-out;}
+@keyframes spinOnce{from{transform:rotate(0deg) scale(1);}50%{transform:rotate(-180deg) scale(1.18);}to{transform:rotate(-360deg) scale(1);}}
+.teacher-btn{position:fixed;bottom:22px;right:212px;width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,107,107,.7);background:linear-gradient(135deg,rgba(160,108,213,.95),rgba(255,107,107,.95));color:#fff;font-size:1.35rem;cursor:pointer;z-index:101;display:none;place-items:center;box-shadow:0 8px 24px rgba(160,108,213,.6);}
+.teacher-btn.show{display:grid;}
+
+.form-wrap{display:flex;flex-direction:column;gap:.6rem;width:100%;max-width:520px;margin-top:1.1rem;}
+.exam-input{font-family:inherit;font-size:clamp(.9rem,1.8vw,1.05rem);padding:.8rem 1.1rem;border-radius:14px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;width:100%;text-align:center;transition:.2s;}
+.exam-input:focus{outline:none;border-color:#4ecdc4;box-shadow:0 0 20px rgba(78,205,196,.35);}
+.exam-input::placeholder{color:rgba(255,255,255,.4);}
+.exam-input.filled{border-color:#25D366;box-shadow:0 0 16px rgba(37,211,102,.35);}
+.form-status{font-size:clamp(.75rem,1.6vw,.9rem);color:#ffe66d;font-weight:700;min-height:1.3em;text-align:center;}
+.form-status.ok{color:#25D366;}
+.form-status.warn{color:#ff6b6b;}
+.start-btn{margin-top:1rem;font-family:'Fredoka',sans-serif;font-size:clamp(.95rem,2vw,1.15rem);font-weight:700;padding:.85rem 2.2rem;border-radius:999px;border:none;background:linear-gradient(135deg,#4ecdc4,#a06cd5);color:#fff;cursor:not-allowed;opacity:.5;transition:all .3s;box-shadow:0 8px 24px rgba(78,205,196,.3);}
+.start-btn.ready{cursor:pointer;opacity:1;box-shadow:0 12px 32px rgba(78,205,196,.6);animation:pulseGlow 2.2s ease-in-out infinite;}
+.start-btn.ready:hover{transform:translateY(-4px) scale(1.05);}
+@keyframes pulseGlow{0%,100%{box-shadow:0 12px 32px rgba(78,205,196,.5);}50%{box-shadow:0 12px 46px rgba(78,205,196,.9);}}
+.start-btn.locked{animation:shake .5s;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+.q-header{display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap;}
+.q-num-badge{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.75rem,1.6vw,.9rem);padding:4px 14px;border-radius:999px;background:linear-gradient(135deg,#a06cd5,#ff6b6b);letter-spacing:1.2px;}
+.q-points-badge{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.7rem,1.5vw,.85rem);padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,rgba(255,230,109,.3),rgba(78,205,196,.25));border:1px solid rgba(255,230,109,.6);color:#ffe66d;letter-spacing:1.2px;}
+.q-text{font-family:'Fredoka',sans-serif;font-size:clamp(1.05rem,2.6vw,1.7rem);font-weight:700;margin:1rem 0 1.4rem;max-width:900px;line-height:1.35;}
+.q-text .hl{background:linear-gradient(135deg,#ffe66d,#4ecdc4);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;width:100%;max-width:780px;}
+.answer{font-family:'Nunito',sans-serif;font-size:clamp(.85rem,1.8vw,1rem);font-weight:700;padding:.95rem 1.05rem;border-radius:16px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:.7rem;text-align:left;}
+.answer .letter{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);display:grid;place-items:center;font-family:'Fredoka',sans-serif;font-size:.95em;transition:.25s;}
+.answer:hover:not(:disabled){background:rgba(78,205,196,.18);border-color:#4ecdc4;transform:translateY(-3px);}
+.answer:hover:not(:disabled) .letter{background:#4ecdc4;color:#0b0a1f;}
+.answer.selected{background:linear-gradient(135deg,rgba(160,108,213,.45),rgba(78,205,196,.35));border-color:#a06cd5;transform:translateY(-2px);}
+.answer.selected .letter{background:#a06cd5;color:#fff;}
+.answer:disabled{cursor:default;opacity:.85;}
+.answer-hint{margin-top:1.2rem;font-size:clamp(.75rem,1.5vw,.88rem);font-weight:700;color:#ffe66d;min-height:1.4em;}
+.answer-hint.ready{color:#25D366;}
+.score-display{margin:.6rem 0 1rem;text-align:center;}
+.score-big{font-family:'Fredoka',sans-serif;font-size:clamp(3.2rem,11vw,6.5rem);font-weight:700;background:linear-gradient(135deg,#ffe66d,#ff6b6b,#a06cd5);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;}
+.score-big .score-unit{font-size:.4em;color:rgba(255,255,255,.6);-webkit-text-fill-color:rgba(255,255,255,.6);margin-left:.15em;letter-spacing:2px;}
+.score-sub{font-size:clamp(.9rem,2vw,1.15rem);color:rgba(255,255,255,.7);margin-top:.2rem;font-weight:700;letter-spacing:1px;}
+.score-msg{font-size:clamp(1rem,2.2vw,1.3rem);margin-top:.6rem;color:rgba(255,255,255,.88);font-weight:700;}
+.wa-btn{display:inline-flex;align-items:center;gap:.7rem;background:linear-gradient(135deg,var(--wa1),var(--wa2));color:#fff;font-family:'Fredoka',sans-serif;font-size:clamp(1rem,2.2vw,1.3rem);font-weight:700;padding:1rem 2rem;border-radius:999px;border:none;cursor:pointer;transition:transform .25s;box-shadow:0 10px 30px rgba(37,211,102,.4);margin-top:1.2rem;}
+.wa-btn:hover{transform:translateY(-4px) scale(1.04);}
+.wa-btn:disabled{opacity:.6;cursor:not-allowed;}
+.wa-btn .wa-icon{font-size:1.3em;}
+.token-preview{margin-top:1.1rem;padding:.7rem 1.2rem;border-radius:12px;background:linear-gradient(135deg,rgba(160,108,213,.18),rgba(78,205,196,.12));border:1px dashed rgba(160,108,213,.55);font-family:'Courier New',monospace;font-size:clamp(.72rem,1.55vw,.9rem);color:#d6bcff;letter-spacing:1.5px;max-width:560px;text-align:center;word-break:break-all;}
+.token-preview b{display:block;font-family:'Fredoka',sans-serif;font-size:clamp(.65rem,1.4vw,.8rem);color:#ffe66d;letter-spacing:2px;margin-bottom:.35rem;text-transform:uppercase;}
+.token-preview .token-value{display:block;font-size:clamp(.68rem,1.4vw,.82rem);color:#d6bcff;line-height:1.4;padding:.3rem 0;max-height:5em;overflow-y:auto;}
+.token-short{color:#7dffcf !important;}
+.token-encrypted{color:#ffd6a5 !important;font-size:clamp(.6rem,1.2vw,.75rem) !important;}
+.copy-token-btn{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.5rem 1.1rem;border-radius:999px;border:1px solid rgba(255,214,165,.55);background:linear-gradient(135deg,rgba(255,214,165,.18),rgba(160,108,213,.15));color:#ffd6a5;font-family:'Fredoka',sans-serif;font-size:clamp(.72rem,1.5vw,.88rem);font-weight:700;cursor:pointer;transition:all .25s;}
+.copy-token-btn:hover{background:linear-gradient(135deg,rgba(255,214,165,.35),rgba(160,108,213,.3));transform:translateY(-2px);color:#fff;}
+.copy-token-btn.copied{background:linear-gradient(135deg,rgba(37,211,102,.35),rgba(78,205,196,.3));border-color:rgba(37,211,102,.75);color:#7dffcf;}
+.dots{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:100;max-width:80vw;flex-wrap:wrap;justify-content:center;}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);border:none;padding:0;cursor:pointer;transition:.35s;}
+.dot:hover:not(:disabled){background:rgba(255,255,255,.55);}
+.dot.active{width:24px;border-radius:6px;background:#4ecdc4;}
+.dot:disabled{opacity:.2;cursor:not-allowed;}
+.dot.exam-dot{background:rgba(255,230,109,.35);}
+.dot.exam-dot.active{background:#ffe66d;}
+.controls{position:fixed;bottom:16px;right:22px;display:flex;gap:10px;z-index:100;}
+.nav-btn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1.1rem;cursor:pointer;transition:.25s;display:grid;place-items:center;}
+.nav-btn:hover:not(:disabled){background:rgba(78,205,196,.35);transform:scale(1.12);}
+.nav-btn:disabled{opacity:.25;cursor:not-allowed;}
+.nav-btn.locked{animation:shake .5s;}
+.confetti{position:fixed;top:-24px;width:10px;height:16px;z-index:999;pointer-events:none;border-radius:2px;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(108vh) rotate(760deg);opacity:.85;}}
+.verify-overlay{position:fixed;inset:0;background:rgba(5,5,20,.92);backdrop-filter:blur(10px);z-index:5000;display:none;align-items:center;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+.verify-overlay.show{display:flex;}
+.verify-panel{width:100%;max-width:820px;background:linear-gradient(135deg,rgba(20,15,45,.98),rgba(10,10,30,.98));border:2px solid rgba(160,108,213,.6);border-radius:24px;padding:1.6rem;max-height:92vh;overflow-y:auto;}
+.verify-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);gap:1rem;flex-wrap:wrap;}
+.verify-title{font-family:'Fredoka',sans-serif;font-size:clamp(1.1rem,2.4vw,1.5rem);font-weight:700;background:linear-gradient(135deg,#ffe66d,#ff6b6b,#a06cd5);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.verify-close{background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.5);color:#ff8f8f;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:grid;place-items:center;}
+.verify-intro{font-size:clamp(.82rem,1.7vw,.95rem);color:rgba(255,255,255,.75);margin-bottom:1rem;line-height:1.5;}
+.verify-intro b{color:#ffe66d;}
+.verify-textarea{width:100%;min-height:180px;padding:1rem;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:rgba(0,0,0,.45);color:#fff;font-family:'Courier New',monospace;font-size:clamp(.78rem,1.6vw,.9rem);line-height:1.5;resize:vertical;}
+.verify-textarea:focus{outline:none;border-color:#a06cd5;}
+.verify-actions{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1rem;}
+.verify-btn{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.82rem,1.8vw,1rem);padding:.75rem 1.5rem;border-radius:999px;border:none;cursor:pointer;transition:.25s;display:inline-flex;align-items:center;gap:.5rem;}
+.verify-btn.primary{background:linear-gradient(135deg,#4ecdc4,#a06cd5);color:#fff;}
+.verify-btn.primary:hover{transform:translateY(-3px);}
+.verify-btn.ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;}
+.verify-result{margin-top:1.2rem;padding:1rem 1.3rem;border-radius:14px;font-size:clamp(.85rem,1.7vw,1rem);display:none;line-height:1.5;}
+.verify-result.show{display:block;}
+.verify-result.ok{background:linear-gradient(135deg,rgba(37,211,102,.2),rgba(78,205,196,.15));border:2px solid #25D366;color:#7dffcf;}
+.verify-result.fail{background:linear-gradient(135deg,rgba(255,107,107,.2),rgba(160,108,213,.15));border:2px solid #ff6b6b;color:#ffb0b0;}
+.verify-result.warn{background:linear-gradient(135deg,rgba(255,230,109,.15),rgba(160,108,213,.12));border:2px solid #ffe66d;color:#ffe66d;}
+.verify-result .result-title{font-family:'Fredoka',sans-serif;font-size:clamp(1rem,2.2vw,1.3rem);font-weight:700;margin-bottom:.6rem;}
+.verify-result .result-data{font-family:'Courier New',monospace;font-size:clamp(.72rem,1.5vw,.85rem);background:rgba(0,0,0,.4);padding:.7rem .9rem;border-radius:8px;margin-top:.6rem;white-space:pre-line;color:rgba(255,255,255,.9);border-left:3px solid rgba(255,255,255,.2);}
+.verify-result .result-data b{color:#ffe66d;}
+.verify-footer{margin-top:1.2rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.08);font-size:clamp(.68rem,1.4vw,.8rem);color:rgba(255,255,255,.5);text-align:center;line-height:1.5;}
+.timer-display{position:fixed;top:58px;left:50%;transform:translateX(-50%);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.95rem,2.2vw,1.3rem);padding:.5rem 1.3rem;border-radius:999px;background:linear-gradient(135deg,rgba(78,205,196,.25),rgba(160,108,213,.25));border:2px solid rgba(78,205,196,.6);color:#5ee7df;letter-spacing:2px;display:none;align-items:center;gap:.5rem;z-index:98;overflow:hidden;}
+.timer-display.show{display:flex;}
+.timer-display .timer-value{font-variant-numeric:tabular-nums;min-width:3.4em;text-align:center;}
+.timer-display .timer-bar{position:absolute;bottom:0;left:0;height:3px;background:currentColor;transition:width 1s linear;}
+.timer-display.warn{background:linear-gradient(135deg,rgba(255,230,109,.25),rgba(255,107,107,.2));border-color:rgba(255,230,109,.7);color:#ffe66d;}
+.timer-display.critical{background:linear-gradient(135deg,rgba(255,107,107,.35),rgba(160,108,213,.25));border-color:#ff6b6b;color:#ff8f8f;animation:timerPulse .8s ease-in-out infinite;}
+@keyframes timerPulse{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.07);}}
+
+@media(max-width:640px){
+  .slide{padding:8vh 4vw 16vh;}
+  .controls{bottom:auto;top:14px;right:14px;}
+  .nav-btn{width:40px;height:40px;font-size:.95rem;}
+  .voice-btn{width:44px;height:44px;font-size:1.1rem;bottom:14px;right:74px;}
+  .replay-btn{width:44px;height:44px;font-size:1.1rem;bottom:14px;right:128px;}
+  .teacher-btn{width:44px;height:44px;font-size:1.1rem;bottom:14px;right:182px;}
+  .dots{bottom:22px;left:auto;right:14px;transform:none;}
+  .brand{bottom:14px;left:12px;}.brand img{height:26px;}
+  .cover-title{font-size:clamp(1.8rem,10vw,3.2rem);}
+  .answers{grid-template-columns:1fr;}
+  .decision-wrap{grid-template-columns:1fr;}
+  .timer-display{top:52px;font-size:.82rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+<div class="topbar">
+  <div class="eval-title"><span class="dot-ev"></span>EVALUACIÓN · HTML5</div>
+  <div class="counter"><span><b id="curNum">01</b> / <span id="totNum">24</span></span><span class="lock-badge" id="lockBadge">🔒 en curso</span></div>
+</div>
+<div class="timer-display" id="timerDisplay"><span>⏱️</span><span class="timer-value" id="timerValue">01:00</span><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+<div class="brand" id="brandLogo"><img src="logo-fundabit.png" alt="Fundabit" onerror="document.getElementById('brandLogo').style.display='none'"></div>
+<button class="replay-btn" id="replayBtn" title="Repetir voz">🔁</button>
+<button class="voice-btn" id="voiceBtn" title="Activar/desactivar voz">🔊</button>
+<button class="teacher-btn" id="teacherBtn" title="Verificador">🔐</button>
+
+<div class="verify-overlay" id="verifyOverlay">
+  <div class="verify-panel">
+    <div class="verify-header">
+      <div class="verify-title">🔐 Verificador de Notas · Profesor</div>
+      <button class="verify-close" id="verifyClose">✕</button>
+    </div>
+    <p class="verify-intro">Pega aquí el <b>mensaje completo de WhatsApp</b> del estudiante. El sistema descifrará el token y validará la integridad.</p>
+    <textarea class="verify-textarea" id="verifyText" placeholder="Pega aquí el mensaje…"></textarea>
+    <div class="verify-actions">
+      <button class="verify-btn primary" id="verifyRun">🔍 Verificar mensaje</button>
+      <button class="verify-btn ghost" id="verifyClear">🗑️ Limpiar</button>
+      <button class="verify-btn ghost" id="verifyExample">📋 Ver ejemplo</button>
+    </div>
+    <div class="verify-result" id="verifyResult"></div>
+    <div class="verify-footer">Fundabit Isla de Coche · <b>Prof. Luis Vásquez</b><br>Sistema de verificación de seguridad · HTML5 v1.0</div>
+  </div>
+</div>
+
+<div class="deck" id="deck">
+
+<!-- 0 · PORTADA + FORMULARIO -->
+<section class="slide">
+  <div class="anim" style="--d:.05s"><span class="badge">Fundabit Isla de Coche</span></div>
+  <h1 class="cover-title anim" style="--d:.15s">HTML<span class="grad">5</span><br>Formularios &amp; CSS</h1>
+  <p class="cover-sub anim" style="--d:.28s">🌐 Construye tus primeras páginas web</p>
+  <div class="anim" style="--d:.38s"><div class="prof-tag"><span class="prof-icon">👨‍🏫</span><span>Prof. Luis Vásquez</span></div></div>
+  <div class="form-wrap anim" style="--d:.52s">
+    <input type="text" id="studentName" class="exam-input" placeholder="✍️ Nombre y apellido" autocomplete="off">
+    <input type="text" id="studentCedula" class="exam-input" placeholder="🆔 Cédula (6 a 10 dígitos)" autocomplete="off" inputmode="numeric">
+    <p class="form-status" id="formStatus">⚠️ Completa tus datos para comenzar</p>
+    <button class="start-btn" id="startBtn" disabled>🚀 Comenzar clase interactiva</button>
+  </div>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 1 · ¿QUÉ ES HTML5? -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🌐 ¿Qué es HTML5?</h2>
+  <p class="lead anim" style="--d:.15s">Es la <b>quinta versión</b> del lenguaje que da estructura a todas las páginas web del mundo.</p>
+  <div class="cards">
+    <div class="card anim" style="--d:.30s"><div class="emoji">🦴</div><h3>No es programación</h3><p>Es un lenguaje de <b>etiquetas</b>: describe qué hay, no qué hacer.</p></div>
+    <div class="card anim" style="--d:.45s"><div class="emoji">🏗️</div><h3>Estructura</h3><p>Define los muros de la web: títulos, párrafos, imágenes, formularios.</p></div>
+    <div class="card anim" style="--d:.60s"><div class="emoji">🌍</div><h3>Estándar mundial</h3><p>Desde 2014, HTML5 es el estándar oficial de la W3C.</p></div>
+  </div>
+  <p class="fact anim" style="--d:.75s">💡 <b>HTML</b> = estructura · <b>CSS</b> = presentación · <b>JavaScript</b> = comportamiento.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 2 · ESTRUCTURA SEMÁNTICA -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🧩 Estructura semántica de un documento</h2>
+  <p class="lead anim" style="--d:.15s">Todo documento HTML5 tiene una <b>estructura clara</b>. Así se organiza:</p>
+  <div class="tree-diagram anim" style="--d:.28s">
+    <div class="lvl1">&lt;!DOCTYPE html&gt;  <span style="color:rgba(255,255,255,.4)">// Indica que es HTML5</span></div>
+    <div class="lvl1">&lt;html lang="es"&gt;</div>
+    <div class="lvl2">  &lt;head&gt;</div>
+    <div class="lvl3">    &lt;meta charset="UTF-8"&gt;</div>
+    <div class="lvl3">    &lt;title&gt;Mi página&lt;/title&gt;</div>
+    <div class="lvl3">    &lt;link rel="stylesheet" href="estilos.css"&gt;</div>
+    <div class="lvl2">  &lt;/head&gt;</div>
+    <div class="lvl2">  &lt;body&gt;</div>
+    <div class="lvl3">    &lt;header&gt; · &lt;nav&gt; · &lt;main&gt;</div>
+    <div class="lvl4">      &lt;section&gt; · &lt;article&gt;</div>
+    <div class="lvl3">    &lt;aside&gt; · &lt;footer&gt;</div>
+    <div class="lvl2">  &lt;/body&gt;</div>
+    <div class="lvl1">&lt;/html&gt;</div>
+  </div>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 3 · ETIQUETAS SEMÁNTICAS -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">📰 Etiquetas semánticas de HTML5</h2>
+  <p class="lead anim" style="--d:.15s">Son como las secciones de un periódico. Ayudan al navegador, a Google y a los lectores de pantalla.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">&lt;header&gt;</div><div class="v">Encabezado · logo, título y menú</div>
+    <div class="k">&lt;nav&gt;</div><div class="v">Menú de navegación principal</div>
+    <div class="k">&lt;main&gt;</div><div class="v">Contenido principal de la página</div>
+    <div class="k">&lt;section&gt;</div><div class="v">Sección temática · agrupa contenido</div>
+    <div class="k">&lt;article&gt;</div><div class="v">Artículo independiente · noticia, post</div>
+    <div class="k">&lt;aside&gt;</div><div class="v">Contenido lateral · publicidad, enlaces</div>
+    <div class="k">&lt;footer&gt;</div><div class="v">Pie de página · copyright, contacto</div>
+  </div>
+  <p class="fact anim" style="--d:.85s">🎯 Antes se usaban &lt;div&gt; para todo. HTML5 trajo <b>significado</b> a la estructura.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 4 · ¿QUÉ ES UN FORMULARIO? -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">📋 ¿Qué es un formulario HTML?</h2>
+  <p class="lead anim" style="--d:.15s">Es la forma en que <b>el usuario ingresa datos</b>: registro, login, compras, comentarios, encuestas…</p>
+  <div class="cards">
+    <div class="card anim" style="--d:.30s"><div class="emoji">📝</div><h3>Registro</h3><p>Nombre, correo, contraseña → crear cuenta.</p></div>
+    <div class="card anim" style="--d:.45s"><div class="emoji">🔐</div><h3>Login</h3><p>Usuario y clave → iniciar sesión.</p></div>
+    <div class="card anim" style="--d:.60s"><div class="emoji">🛒</div><h3>Compra</h3><p>Dirección, tarjeta → finalizar pedido.</p></div>
+    <div class="card anim" style="--d:.75s"><div class="emoji">💬</div><h3>Contacto</h3><p>Asunto y mensaje → enviar al profesor.</p></div>
+  </div>
+  <pre class="code anim" style="--d:.90s">&lt;form action="/enviar" method="POST"&gt;
+  &lt;input type="text" name="nombre"&gt;
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</pre>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 5 · ANATOMÍA DE UN FORMULARIO -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🔧 Anatomía de un formulario</h2>
+  <p class="lead anim" style="--d:.15s">Cinco etiquetas forman la base de todo formulario web.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">&lt;form&gt;</div><div class="v">Contenedor · envuelve todo el formulario</div>
+    <div class="k">&lt;label&gt;</div><div class="v">Etiqueta visible · se une con <b>for</b></div>
+    <div class="k">&lt;input&gt;</div><div class="v">Campo donde el usuario escribe</div>
+    <div class="k">&lt;textarea&gt;</div><div class="v">Campo de texto largo · comentarios</div>
+    <div class="k">&lt;select&gt;</div><div class="v">Lista desplegable · país, edad</div>
+    <div class="k">&lt;button&gt;</div><div class="v">Botón de enviar o resetear</div>
+  </div>
+  <pre class="code anim" style="--d:.80s">&lt;form&gt;
+  &lt;label for="mail"&gt;Correo:&lt;/label&gt;
+  &lt;input type="email" id="mail" name="correo"&gt;
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</pre>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 6 · TIPOS DE INPUT I -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🔤 Tipos de &lt;input&gt; · Parte 1</h2>
+  <p class="lead anim" style="--d:.15s">Cada <b>type</b> cambia el teclado del móvil y activa validaciones automáticas.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">type="text"</div><div class="v">Texto corto · nombre, apellido</div>
+    <div class="k">type="email"</div><div class="v">Correo · valida que tenga @ y dominio</div>
+    <div class="k">type="password"</div><div class="v">Contraseña · oculta los caracteres</div>
+    <div class="k">type="number"</div><div class="v">Números · edad, cantidad</div>
+    <div class="k">type="tel"</div><div class="v">Teléfono · teclado numérico en móvil</div>
+    <div class="k">type="date"</div><div class="v">Fecha · muestra calendario</div>
+  </div>
+  <p class="fact anim" style="--d:.80s">⚠️ Nunca uses <b>type="text"</b> para todo. Usa el tipo correcto: mejora la experiencia y valida solo.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 7 · TIPOS DE INPUT II -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">✅ Tipos de &lt;input&gt; · Parte 2</h2>
+  <p class="lead anim" style="--d:.15s">Estos tipos permiten elegir entre opciones o valores especiales.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">type="checkbox"</div><div class="v">Seleccionar varios · términos, intereses</div>
+    <div class="k">type="radio"</div><div class="v">Elegir solo uno · género, sí/no</div>
+    <div class="k">type="file"</div><div class="v">Subir archivos · imagen, PDF</div>
+    <div class="k">type="color"</div><div class="v">Selector de color · paleta visual</div>
+    <div class="k">type="range"</div><div class="v">Deslizador · volumen, precio</div>
+    <div class="k">type="submit"</div><div class="v">Botón que envía el formulario</div>
+  </div>
+  <p class="fact anim" style="--d:.80s">💡 Con <b>&lt;select&gt;</b> y <b>&lt;option&gt;</b> haces listas desplegables sin necesidad de inputs.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 8 · VALIDACIÓN -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🛡️ Validación HTML5 (sin JavaScript)</h2>
+  <p class="lead anim" style="--d:.15s">HTML5 valida solo. Estos atributos evitan que el usuario envíe datos malos.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">required</div><div class="v">El campo es <b>obligatorio</b></div>
+    <div class="k">placeholder</div><div class="v">Texto de ayuda dentro del campo</div>
+    <div class="k">minlength / maxlength</div><div class="v">Mínimo y máximo de caracteres</div>
+    <div class="k">min / max</div><div class="v">Rango numérico permitido</div>
+    <div class="k">pattern</div><div class="v">Validación con expresión regular</div>
+    <div class="k">type="email"</div><div class="v">Valida formato de correo solo</div>
+  </div>
+  <pre class="code anim" style="--d:.85s">&lt;input type="email" name="correo" required
+       placeholder="tu@email.com"&gt;</pre>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 9 · INTRO CSS -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🎨 ¿Qué es CSS?</h2>
+  <p class="lead anim" style="--d:.15s"><b>C</b>ascading <b>S</b>tyle <b>S</b>heets · Hojas de estilo en cascada. Da <b>presentación</b> a HTML.</p>
+  <div class="cards">
+    <div class="card anim" style="--d:.30s"><div class="emoji">🦴</div><h3>HTML</h3><p>Estructura · esqueleto · contenido</p></div>
+    <div class="card anim" style="--d:.45s"><div class="emoji">👕</div><h3>CSS</h3><p>Presentación · ropa · colores, tamaños, posición</p></div>
+    <div class="card anim" style="--d:.60s"><div class="emoji">🧠</div><h3>JS</h3><p>Comportamiento · músculos · interactividad</p></div>
+  </div>
+  <p class="fact anim" style="--d:.75s">✨ Con CSS controlas: colores, tipografía, tamaños, espacios, animaciones, diseño responsive y más.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 10 · FORMAS DE APLICAR CSS -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">📎 Formas de aplicar CSS</h2>
+  <p class="lead anim" style="--d:.15s">Hay 3 formas. La <b>externa</b> es la recomendada.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">1. En línea</div><div class="v">&lt;h1 style="color:red"&gt; · rápido pero desordenado</div>
+    <div class="k">2. Interno</div><div class="v">&lt;style&gt; en el &lt;head&gt; · solo para esa página</div>
+    <div class="k">3. Externo ✅</div><div class="v">&lt;link rel="stylesheet"&gt; · reutilizable en todo el sitio</div>
+  </div>
+  <pre class="code anim" style="--d:.85s">&lt;!-- En el &lt;head&gt; --&gt;
+&lt;link rel="stylesheet" href="estilos.css"&gt;
+
+/* En estilos.css */
+body { background: #0b0a1f; color: #fff; }
+h1   { font-family: 'Fredoka'; color: #ffe66d; }</pre>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 11 · SELECTORES CSS -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🎯 Selectores CSS básicos</h2>
+  <p class="lead anim" style="--d:.15s">Los selectores apuntan a elementos HTML para aplicarles estilos.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">p { }</div><div class="v">Selector de <b>etiqueta</b> · todos los párrafos</div>
+    <div class="k">.boton { }</div><div class="v">Selector de <b>clase</b> · varios elementos</div>
+    <div class="k">#header { }</div><div class="v">Selector de <b>id</b> · único en la página</div>
+    <div class="k">* { }</div><div class="v">Selector <b>universal</b> · todos los elementos</div>
+    <div class="k">.card p { }</div><div class="v">Selector <b>descendiente</b> · p dentro de .card</div>
+    <div class="k">:hover</div><div class="v"><b>Pseudo-clase</b> · al pasar el mouse</div>
+  </div>
+  <p class="fact anim" style="--d:.80s">⚖️ Cuando hay conflicto, gana el más específico. <b>id &gt; clase &gt; etiqueta</b>.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 12 · MODELO DE CAJA -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">📦 El modelo de caja (Box Model)</h2>
+  <p class="lead anim" style="--d:.15s">Todo elemento HTML es una <b>caja</b> con cuatro capas. ¡Fundamental para el layout!</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">content</div><div class="v">El contenido · texto o imagen</div>
+    <div class="k">padding</div><div class="v">Espacio <b>interno</b> · entre contenido y borde</div>
+    <div class="k">border</div><div class="v">El borde visible · grosor, color, estilo</div>
+    <div class="k">margin</div><div class="v">Espacio <b>externo</b> · separación con otras cajas</div>
+  </div>
+  <pre class="code anim" style="--d:.80s">.caja {
+  padding: 20px;      /* espacio interno */
+  border: 2px solid #4ecdc4;
+  margin: 15px;       /* espacio externo */
+  box-sizing: border-box;
+}</pre>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 13 · SIMULADOR -->
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🛠️ Simulador · Construye tu formulario</h2>
+  <p class="lead anim" style="--d:.15s;font-size:clamp(.78rem,1.7vw,1rem)">Pulsa los botones para agregar campos · mira el HTML generado · cambia el tema CSS.</p>
+
+  <div class="theme-switcher anim" style="--d:.22s">
+    <button class="theme-btn active" data-theme="none">🎨 Sin CSS</button>
+    <button class="theme-btn" data-theme="neon">💜 Neón</button>
+    <button class="theme-btn" data-theme="minimal">⬜ Minimalista</button>
+    <button class="theme-btn" data-theme="retro">📜 Retro</button>
+  </div>
+
+  <div class="form-builder anim" style="--d:.35s">
+    <div class="fb-panel">
+      <h4>🧩 Agregar campo</h4>
+      <div class="fb-palette" id="fbPalette">
+        <button class="fb-btn" data-type="text"><span>📝</span><span>Texto</span></button>
+        <button class="fb-btn" data-type="email"><span>📧</span><span>Email</span></button>
+        <button class="fb-btn" data-type="password"><span>🔒</span><span>Clave</span></button>
+        <button class="fb-btn" data-type="number"><span>🔢</span><span>Número</span></button>
+        <button class="fb-btn" data-type="tel"><span>📱</span><span>Teléfono</span></button>
+        <button class="fb-btn" data-type="date"><span>📅</span><span>Fecha</span></button>
+        <button class="fb-btn" data-type="checkbox"><span>☑️</span><span>Check</span></button>
+        <button class="fb-btn" data-type="radio"><span>⚪</span><span>Radio</span></button>
+        <button class="fb-btn" data-type="select"><span>📋</span><span>Select</span></button>
+        <button class="fb-btn" data-type="textarea"><span>📄</span><span>Texto largo</span></button>
+        <button class="fb-btn" data-type="submit"><span>🚀</span><span>Enviar</span></button>
+        <button class="fb-btn fb-clear" data-clear="1"><span>🗑️</span><span>Limpiar todo</span></button>
+      </div>
+    </div>
+    <div class="fb-panel fb-preview" id="fbPreview">
+      <div class="preview-title">👁️ Vista previa en vivo</div>
+      <form id="demoForm" onsubmit="return false;"></form>
+    </div>
+    <div class="fb-panel fb-code">
+      <div class="preview-title">💻 Código HTML generado</div>
+      <pre id="demoCode">Agrega campos para ver el código…</pre>
+    </div>
+  </div>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 14 · DECISIÓN -->
+<section class="slide">
+  <div class="emoji big anim" style="--d:.05s">🎓</div>
+  <h2 class="anim" style="--d:.15s">¿Qué quieres hacer ahora?</h2>
+  <p class="lead anim" style="--d:.28s">Terminaste la parte teórica. Elige tu siguiente paso.</p>
+  <div class="decision-wrap anim" style="--d:.42s">
+    <button class="decision-btn exam" id="decisionExam"><div class="dec-icon">📝</div><div class="dec-title">HACER EL EXAMEN</div><div class="dec-desc">7 preguntas · 20 pts<br>1 min por pregunta</div></button>
+    <button class="decision-btn review" id="decisionReview"><div class="dec-icon">🔄</div><div class="dec-title">VER CLASE DE NUEVO</div><div class="dec-desc">Repasa la clase<br>y luego haz el examen</div></button>
+  </div>
+  <p class="fact anim" style="--d:.60s">💡 Puedes repasar la clase <b>todas las veces que quieras</b> antes del examen.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 15-21 · PREGUNTAS -->
+<section class="slide question-slide" data-qindex="0">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 1 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué etiqueta HTML5 <span class="hl">crea un formulario</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> &lt;input&gt;</button>
+    <button class="answer anim" style="--d:.38s" data-correct="1"><span class="letter">B</span> &lt;form&gt;</button>
+    <button class="answer anim" style="--d:.46s" data-correct="0"><span class="letter">C</span> &lt;fieldset&gt;</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> &lt;formulario&gt;</button>
+  </div>
+  <p class="answer-hint" id="hint0">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="1">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 2 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué atributo hace que un campo sea <span class="hl">obligatorio</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> mandatory</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> validate</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> required</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> obligatorio</button>
+  </div>
+  <p class="answer-hint" id="hint1">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="2">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 3 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué etiqueta semántica envuelve el <span class="hl">contenido principal</span> de una página?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> &lt;section&gt;</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> &lt;content&gt;</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> &lt;main&gt;</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> &lt;body&gt;</button>
+  </div>
+  <p class="answer-hint" id="hint2">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="3">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 4 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué &lt;input&gt; usarías para pedir un <span class="hl">correo electrónico</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> type="text"</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> type="mail"</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> type="email"</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> type="correo"</button>
+  </div>
+  <p class="answer-hint" id="hint3">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="4">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 5 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Cómo se aplica CSS desde un <span class="hl">archivo externo</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> Con el atributo style en cada etiqueta</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> Con &lt;style&gt; dentro del &lt;body&gt;</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> Con &lt;link rel="stylesheet" href="…"&gt;</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> Con &lt;css src="…"&gt;</button>
+  </div>
+  <p class="answer-hint" id="hint4">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="5">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 6 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué selector CSS apunta a todos los elementos con <span class="hl">class="boton"</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> #boton</button>
+    <button class="answer anim" style="--d:.38s" data-correct="1"><span class="letter">B</span> .boton</button>
+    <button class="answer anim" style="--d:.46s" data-correct="0"><span class="letter">C</span> boton</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> *boton</button>
+  </div>
+  <p class="answer-hint" id="hint5">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="6">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 7 / 7</span><span class="q-points-badge">⭐ 2 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué propiedad CSS crea <span class="hl">espacio interno</span> dentro de un elemento?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> margin</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> border</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> padding</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> spacing</button>
+  </div>
+  <p class="answer-hint" id="hint6">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 22 · RESULTADOS -->
+<section class="slide">
+  <div class="emoji big anim" style="--d:.05s">🏆</div>
+  <h2 class="anim" style="--d:.15s">Tus resultados</h2>
+  <div class="score-display anim" style="--d:.30s">
+    <div class="score-big" id="scoreBig">0<span class="score-unit">/ 20 pts</span></div>
+    <div class="score-sub" id="scoreSub">0 de 7 correctas</div>
+    <div class="score-msg" id="scoreMsg">—</div>
+  </div>
+  <div class="token-preview anim" id="tokenPreview" style="--d:.45s"><b>🔐 Código corto de verificación</b><span id="tokenValue" class="token-value token-short">— — — —</span></div>
+  <div class="token-preview anim" id="tokenPreviewEnc" style="--d:.55s"><b>🔒 Token de seguridad</b><span id="tokenValueEnc" class="token-value token-encrypted">— — — —</span><button class="copy-token-btn" id="copyTokenBtn" type="button">📋 Copiar token</button></div>
+  <p class="fact anim" style="--d:.68s">👉 Pulsa <b>▶</b> para ver la pantalla final con el botón de enviar por WhatsApp.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<!-- 23 · CIERRE -->
+<section class="slide">
+  <div class="emoji big anim" style="--d:.05s">🚀</div>
+  <h2 class="anim" style="--d:.15s">¡Envía tus resultados al profesor!</h2>
+  <p class="lead anim" style="--d:.28s">Terminaste la clase de <b>HTML5 · Formularios y CSS</b>.<br>Ahora entiendes cómo se construyen las páginas web.</p>
+  <button class="wa-btn anim" id="waBtn" style="--d:.42s"><span class="wa-icon">📱</span> Enviar resultados por WhatsApp</button>
+  <div class="token-preview anim" id="tokenPreviewFinal" style="--d:.55s"><b>🔐 Código corto de verificación</b><span id="tokenValueFinal" class="token-value token-short">— — — —</span></div>
+  <div class="token-preview anim" id="tokenPreviewEncFinal" style="--d:.65s"><b>🔒 Token de seguridad</b><span id="tokenValueEncFinal" class="token-value token-encrypted">— — — —</span><button class="copy-token-btn" id="copyTokenBtnFinal" type="button">📋 Copiar token</button></div>
+  <div class="tags anim" style="--d:.75s"><span class="tag">HTML5</span><span class="tag">CSS3</span><span class="tag">Formularios</span><span class="tag">Semántica</span><span class="tag">Selectores</span><span class="tag">Box Model</span></div>
+  <p class="fact anim" style="--d:.85s">🧑‍🏫 Prof. Luis Vásquez · 0412-3583262<br>🎓 ¡Gracias! Ahora puedes crear tus propias páginas web.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Anterior">◀</button>
+  <button class="nav-btn" id="nextBtn" aria-label="Siguiente">▶</button>
+</div>
+
+<script>
+(function(){
+  /* ============================================================
+     CONFIGURACIÓN
+     ============================================================ */
+  const WHATSAPP_NUMBER = '584123583262';
+  const TOTAL_QUESTIONS = 7;
+  const FORM_INDEX = 0, SIMULATOR_INDEX = 13, DECISION_INDEX = 14;
+  const EXAM_START = 15, EXAM_END = 21;
+  const RESULTS_INDEX = 22, LAST_INDEX_CIERRE = 23;
+  const EXAM_TIME_TOTAL = 60;
+  const QUESTION_POINTS = [3,3,3,3,3,3,2];
+  const TOTAL_POINTS = 20;
+  const SECRET_KEY = 'FundabitCoche2026-LuisVasquez-HTML5';
+  const CRYPTO_KEY_STR = 'Fundabit-Coche-LuisVasquez-2026-HTML5!';
+  const MATERIA_NOMBRE = 'Programación · HTML5 y CSS';
+  const CLASE_NUMERO = '01';
+
+  const STORAGE_PROGRESS = 'html5_class_progress_v1';
+  const STORAGE_STARTED  = 'html5_class_started_v1';
+  const STORAGE_NAME     = 'html5_class_name_v1';
+  const STORAGE_CEDULA   = 'html5_class_cedula_v1';
+  const STORAGE_EXAM_ANSWERS = 'html5_class_answers_v1';
+  const STORAGE_VOICE    = 'html5_class_voice_v1';
+  const STORAGE_TIMER    = 'html5_class_timer_v1';
+
+  /* ---------- CRIPTO ---------- */
+  function b64uEnc(bytes){let bin='';for(let i=0;i<bytes.byteLength;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+  function b64uDec(str){let s=str.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return bytes;}
+  async function getKey(){const keyBytes=new TextEncoder().encode(CRYPTO_KEY_STR);return crypto.subtle.importKey('raw',keyBytes,{name:'AES-GCM'},false,['encrypt','decrypt']);}
+  async function encryptPayload(obj){const key=await getKey();const iv=crypto.getRandomValues(new Uint8Array(12));const data=new TextEncoder().encode(JSON.stringify(obj));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data);const combined=new Uint8Array(iv.length+cipher.byteLength);combined.set(iv,0);combined.set(new Uint8Array(cipher),iv.length);return b64uEnc(combined);}
+  async function decryptPayload(b64){try{const key=await getKey();const combined=b64uDec(b64);const iv=combined.slice(0,12);const data=combined.slice(12);const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,data);return JSON.parse(new TextDecoder().decode(dec));}catch(e){return null;}}
+
+  function hashWithKey(data){const payload=data+'||'+SECRET_KEY;let parts=[];for(let seed=0;seed<4;seed++){let h=(0x811c9dc5+seed*0x1000193)>>>0;for(let i=0;i<payload.length;i++){h^=payload.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;h^=(h>>>13);h=Math.imul(h,0x85ebca6b)>>>0;}parts.push(h.toString(16).padStart(8,'0').toUpperCase());}return parts.join('');}
+  function generateToken(nombre,cedula,puntos,aciertos,fecha){const data=['M:'+MATERIA_NOMBRE,'C:'+CLASE_NUMERO,'N:'+nombre.toUpperCase().trim(),'I:'+cedula.trim(),'P:'+puntos,'A:'+aciertos,'F:'+fecha.trim()].join('|');const h=hashWithKey(data);return 'FB26-'+h.slice(0,4)+'-'+h.slice(8,12)+'-'+h.slice(16,20)+'-'+h.slice(24,28);}
+
+  /* ---------- NARRACIONES ---------- */
+  const narrations = {
+    0:"¡Bienvenido a la clase interactiva de HTML5, formularios y CSS, dictada por el profesor Luis Vásquez, en Fundabit Isla de Coche! Hoy aprenderás a estructurar páginas web, crear formularios, y aplicar estilos con CSS. Para comenzar, escribe tu nombre completo y tu cédula de identidad.",
+    1:"HTML5 es la quinta versión del lenguaje de marcado de hipertexto. Es la base de todas las páginas web modernas. Con HTML describimos la estructura y el contenido. HTML no es un lenguaje de programación, es un lenguaje de etiquetas. Y trabaja junto a CSS para el estilo, y a JavaScript para el comportamiento.",
+    2:"Un documento HTML5 tiene una estructura clara. El DOCTYPE indica que usamos HTML5. La etiqueta html envuelve todo el documento. Head contiene metadatos, título, y enlaces a CSS. Body contiene el contenido visible. Y dentro del body usamos etiquetas semánticas como header, nav, main, section, article, aside y footer.",
+    3:"Las etiquetas semánticas son como las secciones de un periódico. Header es el encabezado con el logo y título. Nav es el menú de navegación. Main es el contenido principal. Section agrupa contenido temático. Article es un artículo independiente. Aside es contenido lateral. Y footer es el pie de página. Esto ayuda a los buscadores y a la accesibilidad.",
+    4:"Un formulario HTML permite al usuario ingresar datos. Por ejemplo, registrarse, iniciar sesión, hacer una compra, o enviar un comentario. La etiqueta form envuelve todos los campos. Cada campo tiene un name para identificar el dato y un type para definir su comportamiento. El action indica a dónde se envían los datos.",
+    5:"Los formularios se componen de: form que es el contenedor. Label que describe el campo y se asocia con el atributo for. Input que es el campo en sí. Textarea para textos largos. Select para listas desplegables con option. Y button para enviar o resetear el formulario.",
+    6:"Tipos de input más usados, parte uno. Text para texto corto. Email para correos, valida la arroba. Password oculta los caracteres. Number solo acepta números. Tel para teléfonos, activa teclado numérico en el celular. Y date para fechas, muestra un calendario. Nunca uses text para todo. Usa siempre el tipo correcto.",
+    7:"Tipos de input, parte dos. Checkbox para seleccionar varios. Radio para elegir solo uno, todos con el mismo name. File para subir archivos. Color abre un selector de color. Range es un deslizador de valores. Y submit crea el botón que envía el formulario. Con select y option haces listas desplegables.",
+    8:"HTML5 trae validación sin JavaScript. El atributo required hace obligatorio un campo. Placeholder muestra texto de ayuda. Minlength y maxlength limitan caracteres. Min y max limitan números. Pattern valida con expresiones regulares. Y type igual a email o number activa validaciones automáticas del navegador.",
+    9:"CSS significa Cascading Style Sheets, hojas de estilo en cascada. Es lo que da estilo a HTML. Mientras HTML es la estructura, CSS es la presentación. Con CSS controlamos colores, tipografía, tamaños, espacios, posición, animaciones, y diseño responsive.",
+    10:"Hay tres formas de aplicar CSS. Uno, en línea, con el atributo style directamente en la etiqueta. Dos, interno, con la etiqueta style en el head. Tres, externo, con link rel igual a stylesheet hacia un archivo punto css. La forma recomendada es la externa, porque separa la presentación del contenido y se reutiliza en todo el sitio.",
+    11:"Los selectores CSS apuntan a elementos HTML. Selector de etiqueta: p, h1, div. Selector de clase: punto boton, punto card, con el atributo class. Selector de id: numeral header, con el atributo id único. Selector universal: asterisco. Y selectores compuestos como punto card espacio p. La especificidad determina cuál estilo gana cuando hay conflicto.",
+    12:"El modelo de caja es clave para entender el layout. Todo elemento HTML es una caja con cuatro capas: contenido, padding que es espacio interno, border que es el borde visible, y margin que es espacio externo. La propiedad box sizing igual a border box hace que padding y border se incluyan dentro del ancho total.",
+    13:"Aquí tienes el simulador de formularios. Pulsa los botones de la izquierda para agregar campos: texto, email, contraseña, número, teléfono, fecha, checkbox, radio, select, textarea, y botón enviar. Observa cómo se construye el código HTML en tiempo real. Y prueba los temas de CSS: sin CSS, neón, minimalista y retro, para ver cómo el mismo formulario cambia de apariencia. Practica todo lo que quieras.",
+    14:"Excelente trabajo. Terminaste la teoría. Ahora puedes hacer el examen de 7 preguntas, o repasar la clase desde el principio. Los controles de navegación están bloqueados aquí. Debes pulsar uno de los dos botones.",
+    15:"Pregunta uno, tres puntos. ¿Qué etiqueta HTML5 crea un formulario? Tienes un minuto.",
+    16:"Pregunta dos, tres puntos. ¿Qué atributo hace que un campo sea obligatorio? Tienes un minuto.",
+    17:"Pregunta tres, tres puntos. ¿Qué etiqueta semántica envuelve el contenido principal de una página? Tienes un minuto.",
+    18:"Pregunta cuatro, tres puntos. ¿Qué tipo de input usarías para pedir un correo electrónico? Tienes un minuto.",
+    19:"Pregunta cinco, tres puntos. ¿Cómo se aplica CSS desde un archivo externo? Tienes un minuto.",
+    20:"Pregunta seis, tres puntos. ¿Qué selector CSS apunta a todos los elementos con class boton? Tienes un minuto.",
+    21:"Pregunta siete, dos puntos. ¿Qué propiedad CSS crea espacio interno dentro de un elemento? Tienes un minuto.",
+    22:"¡Excelente trabajo! Aquí están tus resultados. La evaluación vale veinte puntos. Pulsa siguiente para la pantalla final.",
+    23:"¡Felicidades, terminaste la clase de HTML5, formularios y CSS! Para enviar tus resultados al profesor Luis Vásquez, pulsa el botón verde de WhatsApp. ¡Gracias por participar!"
+  };
+
+  /* ============================================================
+     ELEMENTOS
+     ============================================================ */
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const deck = document.getElementById('deck');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const dotsWrap = document.getElementById('dots');
+  const bar = document.getElementById('progressBar');
+  const curNum = document.getElementById('curNum');
+  const totNum = document.getElementById('totNum');
+  const lockBadge = document.getElementById('lockBadge');
+  const nameInput = document.getElementById('studentName');
+  const cedInput = document.getElementById('studentCedula');
+  const formStatus = document.getElementById('formStatus');
+  const startBtn = document.getElementById('startBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
+  const replayBtn = document.getElementById('replayBtn');
+  const teacherBtn = document.getElementById('teacherBtn');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerValue = document.getElementById('timerValue');
+  const timerBar = document.getElementById('timerBar');
+
+  let current = 0;
+  const LAST_INDEX = slides.length - 1;
+  totNum.textContent = String(slides.length).padStart(2,'0');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const isTeacherMode = urlParams.has('profesor') || urlParams.get('modo')==='profesor' || window.location.hash==='#profesor';
+  if (isTeacherMode) teacherBtn.classList.add('show');
+
+  let examAnswers = new Array(TOTAL_QUESTIONS).fill(null);
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_EXAM_ANSWERS)||'null');if(Array.isArray(saved)&&saved.length===TOTAL_QUESTIONS)examAnswers=saved;}catch(e){}
+  function saveAnswers(){try{localStorage.setItem(STORAGE_EXAM_ANSWERS,JSON.stringify(examAnswers));}catch(e){}}
+
+  const safeGet = (k) => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+  const safeSet = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
+
+  let hasStarted = safeGet(STORAGE_STARTED) === '1';
+  let savedIndex = parseInt(safeGet(STORAGE_PROGRESS) || '0', 10) || 0;
+  if (savedIndex < 0 || savedIndex > LAST_INDEX) savedIndex = 0;
+
+  const savedName = safeGet(STORAGE_NAME);
+  const savedCedula = safeGet(STORAGE_CEDULA);
+  if (savedName) nameInput.value = savedName;
+  if (savedCedula) cedInput.value = savedCedula;
+
+  nameInput.addEventListener('input', () => { safeSet(STORAGE_NAME, nameInput.value); checkForm(); });
+  cedInput.addEventListener('input', () => {
+    cedInput.value = cedInput.value.replace(/\D/g, '').slice(0,10);
+    safeSet(STORAGE_CEDULA, cedInput.value);
+    checkForm();
+  });
+
+  /* ============================================================
+     VOZ
+     ============================================================ */
+  const synth = window.speechSynthesis;
+  const voiceSupported = !!synth && typeof SpeechSynthesisUtterance !== 'undefined';
+  let voiceEnabled = safeGet(STORAGE_VOICE) !== '0';
+  let currentUtterance = null;
+  let spanishVoice = null;
+  let speakToken = 0;
+
+  function pickSpanishVoice(){
+    if (!voiceSupported) return null;
+    const voices = synth.getVoices();
+    if (!voices || !voices.length) return null;
+    const prefer = ['es-VE','es-MX','es-US','es-ES','es-AR','es-CO','es-CL','es-PE','es-419','es'];
+    for (const l of prefer){
+      const v = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(l.toLowerCase()));
+      if (v) return v;
+    }
+    return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('es')) || null;
+  }
+  function refreshVoices(){ spanishVoice = pickSpanishVoice(); }
+  if (voiceSupported){
+    refreshVoices();
+    if (typeof synth.onvoiceschanged !== 'undefined') synth.onvoiceschanged = refreshVoices;
+    setTimeout(refreshVoices, 400); setTimeout(refreshVoices, 1200);
+  }
+  function updateVoiceBtn(){
+    if (!voiceSupported){ voiceBtn.style.display='none'; replayBtn.style.display='none'; return; }
+    if (voiceEnabled){ voiceBtn.classList.remove('off'); voiceBtn.textContent='🔊'; }
+    else { voiceBtn.classList.add('off'); voiceBtn.textContent='🔇'; }
+  }
+  function stopSpeaking(){
+    if (!voiceSupported) return;
+    speakToken++;
+    try{ synth.cancel(); }catch(e){}
+    currentUtterance = null; voiceBtn.classList.remove('speaking');
+  }
+  function speakSlide(idx, options){
+    if (!voiceSupported) return;
+    options = options || {};
+    const forcePlay = !!options.force;
+    stopSpeaking();
+    if (!voiceEnabled && !forcePlay) return;
+    const text = narrations[idx]; if (!text) return;
+    if (!spanishVoice) refreshVoices();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = (spanishVoice && spanishVoice.lang) || 'es-ES';
+    if (spanishVoice) utter.voice = spanishVoice;
+    utter.rate = 1.0; utter.pitch = 1.05; utter.volume = 1.0;
+    utter.onstart = () => voiceBtn.classList.add('speaking');
+    utter.onend = () => { if (currentUtterance === utter) voiceBtn.classList.remove('speaking'); };
+    utter.onerror = () => { if (currentUtterance === utter) voiceBtn.classList.remove('speaking'); };
+    currentUtterance = utter;
+    const myToken = ++speakToken;
+    setTimeout(() => {
+      if (myToken !== speakToken) return;
+      if (!voiceEnabled && !forcePlay) return;
+      try{ synth.speak(utter); }catch(e){}
+    }, 120);
+  }
+  voiceBtn.addEventListener('click', () => {
+    if (!voiceSupported){ showToast('🔇 Tu navegador no soporta voz.'); return; }
+    voiceEnabled = !voiceEnabled;
+    safeSet(STORAGE_VOICE, voiceEnabled ? '1' : '0');
+    updateVoiceBtn();
+    if (voiceEnabled){ showToast('🔊 Voz activada'); speakSlide(current); }
+    else { showToast('🔇 Voz silenciada'); stopSpeaking(); }
+  });
+  replayBtn.addEventListener('click', () => {
+    if (!voiceSupported){ showToast('🔇 Tu navegador no soporta voz.'); return; }
+    replayBtn.classList.remove('spinning'); void replayBtn.offsetWidth;
+    replayBtn.classList.add('spinning');
+    setTimeout(() => replayBtn.classList.remove('spinning'), 600);
+    if (!voiceEnabled){ voiceEnabled = true; safeSet(STORAGE_VOICE,'1'); updateVoiceBtn(); }
+    speakSlide(current, { force: true });
+    showToast('🔁 Repitiendo explicación…');
+  });
+  updateVoiceBtn();
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopSpeaking(); });
+
+  /* ============================================================
+     TIMER
+     ============================================================ */
+  let examTimerId = null, examSecondsLeft = EXAM_TIME_TOTAL, examTimerRunning = false;
+  function formatTime(sec){ const s=Math.max(0,sec); const m=Math.floor(s/60); const r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
+  function updateTimerUI(){
+    timerValue.textContent = formatTime(examSecondsLeft);
+    const pct = Math.max(0, Math.min(100, (examSecondsLeft/EXAM_TIME_TOTAL)*100));
+    timerBar.style.width = pct + '%';
+    timerDisplay.classList.remove('warn','critical');
+    if (examSecondsLeft <= 10) timerDisplay.classList.add('critical');
+    else if (examSecondsLeft <= 20) timerDisplay.classList.add('warn');
+  }
+  function startTimerForCurrentQuestion(){
+    if (examTimerId){ clearInterval(examTimerId); examTimerId=null; }
+    examTimerRunning = false;
+    examSecondsLeft = EXAM_TIME_TOTAL;
+    safeSet(STORAGE_TIMER, String(examSecondsLeft));
+    timerDisplay.classList.add('show');
+    timerDisplay.classList.remove('warn','critical');
+    updateTimerUI();
+    examTimerRunning = true;
+    examTimerId = setInterval(() => {
+      examSecondsLeft--;
+      safeSet(STORAGE_TIMER, String(examSecondsLeft));
+      updateTimerUI();
+      if (examSecondsLeft <= 0){
+        clearInterval(examTimerId); examTimerId=null; examTimerRunning=false;
+        safeSet(STORAGE_TIMER,'0'); onQuestionTimeUp();
+      }
+    }, 1000);
+  }
+  function stopExamTimer(){
+    if (examTimerId){ clearInterval(examTimerId); examTimerId=null; }
+    examTimerRunning = false;
+    timerDisplay.classList.remove('show','warn','critical');
+  }
+  function onQuestionTimeUp(){
+    const qi = current - EXAM_START;
+    if (qi >= 0 && qi < TOTAL_QUESTIONS){
+      if (!examAnswers[qi] || typeof examAnswers[qi].selectedIdx !== 'number'){
+        examAnswers[qi] = { selectedIdx:-1, correct:0 }; saveAnswers();
+      }
+    }
+    showToast('⏰ ¡Se acabó el tiempo!\nAvanzando…');
+    stopSpeaking();
+    if (current < EXAM_END) goToForce(current+1);
+    else goToForce(RESULTS_INDEX);
+  }
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+  function isExamSlide(idx){ return idx >= EXAM_START && idx <= EXAM_END; }
+  function isAnswerSelected(qi){ return examAnswers[qi] && typeof examAnswers[qi].selectedIdx === 'number'; }
+
+  /* ============================================================
+     FORM VALIDATION
+     ============================================================ */
+  function isFormComplete(){
+    const nombre = nameInput.value.trim();
+    const cedula = cedInput.value.trim();
+    const nombreOk = nombre.length >= 5 && nombre.split(/\s+/).length >= 2;
+    const cedulaOk = /^\d{6,10}$/.test(cedula);
+    return { ok: nombreOk && cedulaOk, nombreOk, cedulaOk };
+  }
+  function checkForm(){
+    const { ok, nombreOk, cedulaOk } = isFormComplete();
+    nameInput.classList.toggle('filled', nombreOk);
+    cedInput.classList.toggle('filled', cedulaOk);
+    if (ok){ formStatus.textContent='✅ ¡Listo! Pulsa "Comenzar"'; formStatus.className='form-status ok'; }
+    else if (!nombreOk && !cedulaOk){ formStatus.textContent='⚠️ Escribe tu nombre completo y cédula'; formStatus.className='form-status warn'; }
+    else if (!nombreOk){ formStatus.textContent='⚠️ Falta nombre y apellido'; formStatus.className='form-status warn'; }
+    else { formStatus.textContent='⚠️ Falta la cédula (6 a 10 dígitos)'; formStatus.className='form-status warn'; }
+    if (current === FORM_INDEX){
+      startBtn.classList.toggle('ready', ok);
+      startBtn.disabled = !ok;
+      nextBtn.disabled = !ok;
+    }
+  }
+
+  /* ============================================================
+     DOTS + TOAST
+     ============================================================ */
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot';
+    if (i >= EXAM_START && i <= EXAM_END) d.classList.add('exam-dot');
+    d.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(document.querySelectorAll('.dot'));
+
+  let toastEl = null;
+  function showToast(msg){
+    if (!toastEl){ toastEl = document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  /* ============================================================
+     NAVEGACIÓN
+     ============================================================ */
+  function renderSlideUI(){
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === current));
+    dots.forEach((d, idx) => {
+      d.classList.toggle('active', idx === current);
+      if (current === DECISION_INDEX) d.disabled = true;
+      else if (isExamSlide(idx)) d.disabled = (idx !== current);
+      else if (current >= EXAM_START) d.disabled = (idx <= EXAM_END);
+      else d.disabled = hasStarted && idx === FORM_INDEX;
+    });
+    bar.style.width = ((current+1)/slides.length*100) + '%';
+    curNum.textContent = String(current+1).padStart(2,'0');
+    const minAllowed = hasStarted ? 1 : 0;
+    const blockBack = current >= EXAM_START;
+    prevBtn.disabled = (current <= minAllowed) || blockBack;
+    if (current === FORM_INDEX){
+      const {ok} = isFormComplete();
+      nextBtn.disabled = !ok; startBtn.disabled = !ok;
+      startBtn.classList.toggle('ready', ok);
+      checkForm();
+    } else if (isExamSlide(current)){
+      const qi = current - EXAM_START;
+      nextBtn.disabled = !isAnswerSelected(qi);
+    } else if (current === DECISION_INDEX){
+      prevBtn.disabled = true; nextBtn.disabled = true;
+    } else { nextBtn.disabled = current === LAST_INDEX; }
+    if (hasStarted) lockBadge.classList.add('show');
+    else lockBadge.classList.remove('show');
+    if (current === RESULTS_INDEX){ updateResults(); updateAllTokens(); if (calculatePoints() >= 14) confetti(); }
+    if (current === LAST_INDEX_CIERRE){ updateAllTokens(); confetti(); }
+    if (current >= EXAM_START && current <= EXAM_END) startTimerForCurrentQuestion();
+    else stopExamTimer();
+  }
+
+  function goToForce(i){
+    const target = Math.max(0, Math.min(LAST_INDEX, i));
+    stopSpeaking();
+    current = target;
+    safeSet(STORAGE_PROGRESS, String(current));
+    renderSlideUI();
+    speakSlide(current);
+  }
+
+  function goTo(i){
+    const target = Math.max(0, Math.min(LAST_INDEX, i));
+    if (hasStarted && target === FORM_INDEX){
+      showToast('🔒 Ya comenzaste la clase.\nContinúa donde la dejaste.'); return;
+    }
+    if (current === FORM_INDEX && target > FORM_INDEX){
+      const { ok } = isFormComplete();
+      if (!ok){
+        startBtn.classList.add('locked');
+        setTimeout(() => startBtn.classList.remove('locked'), 500);
+        showToast('⚠️ Debes completar nombre y cédula\npara comenzar.'); return;
+      }
+      hasStarted = true; safeSet(STORAGE_STARTED, '1');
+    }
+    if (current === DECISION_INDEX && target !== DECISION_INDEX){
+      showToast('🎓 Debes pulsar uno de los dos botones\npara continuar');
+      return;
+    }
+    if (target < current && current >= EXAM_START){
+      prevBtn.classList.add('locked');
+      setTimeout(() => prevBtn.classList.remove('locked'), 500);
+      if (isExamSlide(current)) showToast('🔒 No puedes retroceder durante la evaluación.');
+      else showToast('🔒 No puedes volver a la evaluación.');
+      return;
+    }
+    if (isExamSlide(current) && target > current){
+      const qi = current - EXAM_START;
+      if (!isAnswerSelected(qi)){
+        nextBtn.classList.add('locked');
+        setTimeout(() => nextBtn.classList.remove('locked'), 500);
+        showToast('⚠️ Debes responder la pregunta\nantes de continuar.'); return;
+      }
+    }
+    if (current === EXAM_END && target > EXAM_END){
+      const faltan = examAnswers.filter(a => !a || typeof a.selectedIdx !== 'number').length;
+      if (faltan > 0){ showToast('⚠️ Aún tienes '+faltan+' pregunta'+(faltan>1?'s':'')+' sin responder.'); return; }
+    }
+    stopSpeaking();
+    current = target;
+    safeSet(STORAGE_PROGRESS, String(current));
+    renderSlideUI();
+    speakSlide(current);
+  }
+
+  const next = () => goTo(current + 1);
+  const prev = () => goTo(current - 1);
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  startBtn.addEventListener('click', () => {
+    const { ok } = isFormComplete();
+    if (!ok){
+      startBtn.classList.add('locked');
+      setTimeout(() => startBtn.classList.remove('locked'), 500);
+      showToast('⚠️ Completa nombre y cédula\npara comenzar.'); return;
+    }
+    goTo(1);
+  });
+
+  document.getElementById('decisionExam').addEventListener('click', () => {
+    showToast('📝 ¡Comenzando el examen!');
+    goToForce(EXAM_START);
+  });
+  document.getElementById('decisionReview').addEventListener('click', () => {
+    showToast('🔄 Volviendo al inicio para repasar…');
+    goToForce(1);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (verifyOverlay.classList.contains('show')){
+      if (e.key === 'Escape') verifyOverlay.classList.remove('show');
+      return;
+    }
+    if (current === DECISION_INDEX){
+      if (['ArrowRight','ArrowDown',' ','PageDown','ArrowLeft','ArrowUp','PageUp','Home','End'].includes(e.key)){
+        e.preventDefault();
+        showToast('🎓 Debes pulsar uno de los dos botones');
+      }
+      return;
+    }
+    if (['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){ e.preventDefault(); next(); }
+    if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    if (e.key === 'Home') goTo(hasStarted ? 1 : 0);
+    if (e.key === 'End') goTo(LAST_INDEX);
+  });
+
+  let hintShown = false;
+  deck.addEventListener('click', e => {
+    if (e.target.closest('button, input, textarea, a, .answer, .form-builder, .theme-switcher, .voice-btn, .replay-btn, .teacher-btn, .verify-overlay, .timer-display, .decision-wrap, .dots, .controls')) return;
+    if (hintShown) return;
+    hintShown = true;
+    showToast('👆 Usa los botones ◀ ▶\npara cambiar de diapositiva');
+    setTimeout(() => { hintShown = false; }, 5000);
+  });
+
+  /* ============================================================
+     EXAMEN
+     ============================================================ */
+  document.querySelectorAll('.question-slide').forEach(slide => {
+    const qi = parseInt(slide.dataset.qindex, 10);
+    const answers = slide.querySelectorAll('.answer');
+    const hint = slide.querySelector('.answer-hint');
+    if (examAnswers[qi] && typeof examAnswers[qi].selectedIdx === 'number'){
+      const sel = examAnswers[qi].selectedIdx;
+      answers.forEach((b, idx) => { if (idx === sel) b.classList.add('selected'); });
+      hint.textContent = '✅ Respuesta guardada';
+      hint.classList.add('ready');
+    }
+    answers.forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        if (examAnswers[qi] && typeof examAnswers[qi].selectedIdx === 'number'){
+          showToast('🔒 Ya respondiste esta pregunta.'); return;
+        }
+        answers.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        examAnswers[qi] = { selectedIdx: idx, correct: btn.dataset.correct === '1' ? 1 : 0 };
+        saveAnswers();
+        hint.textContent = '✅ Respuesta guardada · Pulsa ▶ para continuar';
+        hint.classList.add('ready');
+        nextBtn.disabled = false;
+      });
+    });
+  });
+
+  function countCorrect(){ return examAnswers.reduce((s,a) => s + ((a && a.correct) ? 1 : 0), 0); }
+  function calculatePoints(){ return examAnswers.reduce((sum,a,i) => sum + ((a && a.correct) ? QUESTION_POINTS[i] : 0), 0); }
+  function updateResults(){
+    const puntos = calculatePoints();
+    const aciertos = countCorrect();
+    const pct = Math.round(puntos/TOTAL_POINTS*100);
+    document.getElementById('scoreBig').innerHTML = puntos + '<span class="score-unit">/ '+TOTAL_POINTS+' pts</span>';
+    document.getElementById('scoreSub').textContent = aciertos + ' de ' + TOTAL_QUESTIONS + ' correctas';
+    let msg = '';
+    if (pct === 100) msg = '🌟 ¡PERFECTO! Dominas HTML5 y CSS';
+    else if (pct >= 80) msg = '👏 ¡Excelente! Entiendes los formularios';
+    else if (pct >= 60) msg = '💪 ¡Bien! Vas por buen camino';
+    else if (pct >= 40) msg = '📖 Repasa un poco más la clase';
+    else msg = '🔁 Vuelve a ver la clase y reinténtalo';
+    document.getElementById('scoreMsg').textContent = msg + '  ·  ' + pct + '%';
+  }
+  function buildFechaStr(){ return new Date().toLocaleString('es-VE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+  function buildPayload(){
+    return { m:MATERIA_NOMBRE, c:CLASE_NUMERO,
+      n:(nameInput.value||'').trim()||'Estudiante',
+      cc:(cedInput.value||'').trim()||'00000000',
+      p:calculatePoints(), a:countCorrect(), f:buildFechaStr(),
+      d:examAnswers.map(a => (a && a.correct) ? 1 : 0) };
+  }
+  async function generateEncryptedToken(){ return await encryptPayload(buildPayload()); }
+  async function updateAllTokens(){
+    const nombre = (nameInput.value || '').trim() || 'Estudiante';
+    const cedula = (cedInput.value || '').trim() || '00000000';
+    const puntos = calculatePoints();
+    const aciertos = countCorrect();
+    const fecha = buildFechaStr();
+    const tokenCorto = generateToken(nombre, cedula, puntos, aciertos, fecha);
+    ['tokenValue','tokenValueFinal'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = tokenCorto; });
+    try{
+      const tokenEnc = await generateEncryptedToken();
+      ['tokenValueEnc','tokenValueEncFinal'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = tokenEnc; });
+    } catch(e){ console.error(e); }
+  }
+  function setupCopyButton(btnId, tokenId){
+    const btn = document.getElementById(btnId); if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const el = document.getElementById(tokenId);
+      const token = el ? el.textContent : '';
+      if (!token || token.includes('—')){ showToast('⏳ Token aún no generado'); return; }
+      try {
+        await navigator.clipboard.writeText(token);
+        btn.classList.add('copied');
+        const original = btn.textContent;
+        btn.textContent = '✅ ¡Copiado!';
+        showToast('📋 Token copiado');
+        setTimeout(() => { btn.classList.remove('copied'); btn.textContent = original; }, 2000);
+      } catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = token; ta.style.position='fixed'; ta.style.left='-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showToast('📋 Token copiado'); }
+        catch(e2){ showToast('❌ No se pudo copiar'); }
+        document.body.removeChild(ta);
+      }
+    });
+  }
+  setupCopyButton('copyTokenBtn', 'tokenValueEnc');
+  setupCopyButton('copyTokenBtnFinal', 'tokenValueEncFinal');
+
+  /* ============================================================
+     SIMULADOR DE FORMULARIOS
+     ============================================================ */
+  const FIELD_TEMPLATES = {
+    text:     { type:'text',     label:'Nombre',      name:'nombre',      placeholder:'Escribe tu nombre', required:true },
+    email:    { type:'email',    label:'Correo',      name:'correo',      placeholder:'tu@email.com', required:true },
+    password: { type:'password', label:'Contraseña',  name:'clave',       placeholder:'••••••••', required:true },
+    number:   { type:'number',   label:'Edad',        name:'edad',        placeholder:'18', min:0, max:120 },
+    tel:      { type:'tel',      label:'Teléfono',    name:'telefono',    placeholder:'0412-0000000' },
+    date:     { type:'date',     label:'Fecha',       name:'fecha' },
+    checkbox: { type:'checkbox', label:'Acepto los términos', name:'acepto' },
+    radio:    { type:'radio',    label:'Género',      name:'genero',      options:['Masculino','Femenino','Otro'] },
+    select:   { type:'select',   label:'País',        name:'pais',        options:['Venezuela','Colombia','México','Otro'] },
+    textarea: { type:'textarea', label:'Comentario',  name:'comentario',  placeholder:'Escribe aquí...' },
+    submit:   { type:'submit',   value:'Enviar' }
+  };
+
+  const builderState = [];
+  const fbPreview = document.getElementById('fbPreview');
+  const demoForm = document.getElementById('demoForm');
+  const demoCode = document.getElementById('demoCode');
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function createFieldElement(field){
+    const t = FIELD_TEMPLATES[field.type];
+    const wrap = document.createElement('div');
+    wrap.className = 'demo-field';
+
+    if (field.type === 'submit'){
+      const btn = document.createElement('button');
+      btn.type = 'submit'; btn.className = 'demo-submit'; btn.textContent = t.value;
+      wrap.appendChild(btn); return wrap;
+    }
+    if (field.type === 'checkbox'){
+      const label = document.createElement('label');
+      label.className = 'demo-checkbox';
+      const input = document.createElement('input');
+      input.type = 'checkbox'; input.name = t.name;
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(t.label));
+      wrap.appendChild(label); return wrap;
+    }
+    if (field.type === 'radio'){
+      const group = document.createElement('div');
+      group.className = 'demo-radio-group';
+      t.options.forEach((opt, i) => {
+        const label = document.createElement('label');
+        label.className = 'demo-radio';
+        const input = document.createElement('input');
+        input.type = 'radio'; input.name = t.name;
+        if (i === 0) input.checked = true;
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(opt));
+        group.appendChild(label);
+      });
+      wrap.appendChild(group); return wrap;
+    }
+    if (field.type === 'select'){
+      const label = document.createElement('label');
+      label.textContent = t.label;
+      wrap.appendChild(label);
+      const sel = document.createElement('select');
+      sel.name = t.name;
+      t.options.forEach(opt => {
+        const o = document.createElement('option');
+        o.textContent = opt;
+        sel.appendChild(o);
+      });
+      wrap.appendChild(sel); return wrap;
+    }
+    if (field.type === 'textarea'){
+      const label = document.createElement('label');
+      label.textContent = t.label;
+      wrap.appendChild(label);
+      const ta = document.createElement('textarea');
+      ta.name = t.name; ta.placeholder = t.placeholder;
+      wrap.appendChild(ta); return wrap;
+    }
+    // text, email, password, number, tel, date
+    const label = document.createElement('label');
+    label.textContent = t.label;
+    wrap.appendChild(label);
+    const input = document.createElement('input');
+    input.type = t.type; input.name = t.name;
+    input.placeholder = t.placeholder || '';
+    if (t.required) input.required = true;
+    if (t.min !== undefined) input.min = t.min;
+    if (t.max !== undefined) input.max = t.max;
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function generateCodeHTML(){
+    let code = '<span class="c-tag">&lt;form</span> <span class="c-attr">action</span>=<span class="c-val">"#"</span> <span class="c-attr">method</span>=<span class="c-val">"POST"</span><span class="c-tag">&gt;</span>\n';
+    builderState.forEach(field => {
+      const t = FIELD_TEMPLATES[field.type];
+      if (field.type === 'submit'){
+        code += '  <span class="c-tag">&lt;button</span> <span class="c-attr">type</span>=<span class="c-val">"submit"</span><span class="c-tag">&gt;</span><span class="c-txt">'+escapeHtml(t.value)+'</span><span class="c-tag">&lt;/button&gt;</span>\n';
+      } else if (field.type === 'checkbox'){
+        code += '  <span class="c-tag">&lt;label&gt;</span>\n    <span class="c-tag">&lt;input</span> <span class="c-attr">type</span>=<span class="c-val">"checkbox"</span> <span class="c-attr">name</span>=<span class="c-val">"'+t.name+'"</span><span class="c-tag">&gt;</span>\n    <span class="c-txt">'+escapeHtml(t.label)+'</span>\n  <span class="c-tag">&lt;/label&gt;</span>\n';
+      } else if (field.type === 'radio'){
+        code += '  <span class="c-tag">&lt;p&gt;</span><span class="c-txt">'+escapeHtml(t.label)+'</span><span class="c-tag">&lt;/p&gt;</span>\n';
+        t.options.forEach(opt => {
+          const val = opt.toLowerCase().replace(/\s+/g,'-');
+          code += '  <span class="c-tag">&lt;label&gt;</span><span class="c-tag">&lt;input</span> <span class="c-attr">type</span>=<span class="c-val">"radio"</span> <span class="c-attr">name</span>=<span class="c-val">"'+t.name+'"</span> <span class="c-attr">value</span>=<span class="c-val">"'+val+'"</span><span class="c-tag">&gt;</span><span class="c-txt">'+escapeHtml(opt)+'</span><span class="c-tag">&lt;/label&gt;</span>\n';
+        });
+      } else if (field.type === 'select'){
+        code += '  <span class="c-tag">&lt;label</span> <span class="c-attr">for</span>=<span class="c-val">"'+t.name+'"</span><span class="c-tag">&gt;</span><span class="c-txt">'+escapeHtml(t.label)+'</span><span class="c-tag">&lt;/label&gt;</span>\n';
+        code += '  <span class="c-tag">&lt;select</span> <span class="c-attr">id</span>=<span class="c-val">"'+t.name+'"</span> <span class="c-attr">name</span>=<span class="c-val">"'+t.name+'"</span><span class="c-tag">&gt;</span>\n';
+        t.options.forEach(opt => {
+          code += '    <span class="c-tag">&lt;option&gt;</span><span class="c-txt">'+escapeHtml(opt)+'</span><span class="c-tag">&lt;/option&gt;</span>\n';
+        });
+        code += '  <span class="c-tag">&lt;/select&gt;</span>\n';
+      } else if (field.type === 'textarea'){
+        code += '  <span class="c-tag">&lt;label</span> <span class="c-attr">for</span>=<span class="c-val">"'+t.name+'"</span><span class="c-tag">&gt;</span><span class="c-txt">'+escapeHtml(t.label)+'</span><span class="c-tag">&lt;/label&gt;</span>\n';
+        code += '  <span class="c-tag">&lt;textarea</span> <span class="c-attr">id</span>=<span class="c-val">"'+t.name+'"</span> <span class="c-attr">name</span>=<span class="c-val">"'+t.name+'"</span> <span class="c-attr">placeholder</span>=<span class="c-val">"'+escapeHtml(t.placeholder)+'"</span><span class="c-tag">&gt;&lt;/textarea&gt;</span>\n';
+      } else {
+        const req = t.required ? ' <span class="c-attr">required</span>' : '';
+        const ph = t.placeholder ? ' <span class="c-attr">placeholder</span>=<span class="c-val">"'+escapeHtml(t.placeholder)+'"</span>' : '';
+        const minA = t.min !== undefined ? ' <span class="c-attr">min</span>=<span class="c-val">"'+t.min+'"</span>' : '';
+        const maxA = t.max !== undefined ? ' <span class="c-attr">max</span>=<span class="c-val">"'+t.max+'"</span>' : '';
+        code += '  <span class="c-tag">&lt;label</span> <span class="c-attr">for</span>=<span class="c-val">"'+t.name+'"</span><span class="c-tag">&gt;</span><span class="c-txt">'+escapeHtml(t.label)+'</span><span class="c-tag">&lt;/label&gt;</span>\n';
+        code += '  <span class="c-tag">&lt;input</span> <span class="c-attr">type</span>=<span class="c-val">"'+t.type+'"</span> <span class="c-attr">id</span>=<span class="c-val">"'+t.name+'"</span> <span class="c-attr">name</span>=<span class="c-val">"'+t.name+'"</span>'+ph+req+minA+maxA+'<span class="c-tag">&gt;</span>\n';
+      }
+    });
+    code += '<span class="c-tag">&lt;/form&gt;</span>';
+    return code;
+  }
+
+  function renderBuilder(){
+    demoForm.innerHTML = '';
+    if (builderState.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'fb-empty';
+      empty.textContent = 'Tu formulario está vacío. Agrega campos desde la izquierda…';
+      demoForm.appendChild(empty);
+      demoCode.textContent = 'Agrega campos para ver el código…';
+      return;
+    }
+    builderState.forEach(field => demoForm.appendChild(createFieldElement(field)));
+    demoCode.innerHTML = generateCodeHTML();
+  }
+
+  document.getElementById('fbPalette').addEventListener('click', e => {
+    const btn = e.target.closest('.fb-btn'); if (!btn) return;
+    if (btn.dataset.clear){ builderState.length = 0; renderBuilder(); showToast('🗑️ Formulario limpiado'); return; }
+    const type = btn.dataset.type; if (!type || !FIELD_TEMPLATES[type]) return;
+    builderState.push({ type });
+    renderBuilder();
+    showToast('➕ Campo "' + type + '" agregado');
+  });
+
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const theme = btn.dataset.theme;
+      fbPreview.classList.remove('theme-neon','theme-minimal','theme-retro');
+      if (theme !== 'none') fbPreview.classList.add('theme-' + theme);
+      showToast('🎨 Tema aplicado: ' + btn.textContent.trim());
+    });
+  });
+
+  renderBuilder();
+
+  /* ============================================================
+     VERIFICADOR DOCENTE
+     ============================================================ */
+  const verifyOverlay = document.getElementById('verifyOverlay');
+  const verifyText = document.getElementById('verifyText');
+  const verifyResult = document.getElementById('verifyResult');
+  teacherBtn.addEventListener('click', () => { verifyOverlay.classList.add('show'); verifyResult.classList.remove('show'); });
+  document.getElementById('verifyClose').addEventListener('click', () => verifyOverlay.classList.remove('show'));
+  verifyOverlay.addEventListener('click', e => { if (e.target === verifyOverlay) verifyOverlay.classList.remove('show'); });
+  document.getElementById('verifyClear').addEventListener('click', () => {
+    verifyText.value = ''; verifyResult.classList.remove('show');
+    verifyResult.className = 'verify-result'; verifyText.focus();
+  });
+  document.getElementById('verifyExample').addEventListener('click', async () => {
+    const examplePayload = { m:MATERIA_NOMBRE, c:CLASE_NUMERO, n:'María González', cc:'12345678', p:17, a:6, f:'15/01/2026 10:30', d:[1,1,1,0,1,1,1] };
+    const enc = await encryptPayload(examplePayload);
+    const corto = generateToken('María González','12345678',17,6,'15/01/2026 10:30');
+    verifyText.value =
+`¡Hola! 🎓
+
+📝 *EVALUACIÓN · HTML5 · FORMULARIOS Y CSS*
+🏫 Fundabit Isla de Coche
+👨‍🏫 Prof. Luis Vásquez
+
+📚 *Materia:* ${MATERIA_NOMBRE}
+🏫 *Clase:* ${CLASE_NUMERO}
+
+🧑 Nombre: *María González*
+🆔 Cédula: *12345678*
+
+🎯 Puntos: *17 / 20 pts*
+✅ Correctas: *6 de 7*
+📈 Porcentaje: *85%*
+👏 Estado: ¡Excelente!
+
+🕒 Fecha: 15/01/2026 10:30
+
+🔐 *CÓDIGO CORTO:*
+\`${corto}\`
+
+🔒 *TOKEN DE SEGURIDAD:*
+\`${enc}\`
+
+Enviado desde la clase interactiva ✨`;
+    verifyText.focus();
+  });
+  document.getElementById('verifyRun').addEventListener('click', async () => {
+    const raw = (verifyText.value || '').trim();
+    verifyResult.className = 'verify-result';
+    if (!raw){
+      verifyResult.classList.add('show','warn');
+      verifyResult.innerHTML = '<div class="result-title">⚠️ Mensaje vacío</div>Pega el mensaje primero.';
+      return;
+    }
+    const encMatch = raw.match(/TOKEN DE SEGURIDAD:?\*?\s*`?([A-Za-z0-9_\-]+)`?/i) || raw.match(/`([A-Za-z0-9_\-]{80,})`/);
+    if (!encMatch){
+      verifyResult.classList.add('show','warn');
+      verifyResult.innerHTML = '<div class="result-title">⚠️ No se encontró el token de seguridad</div><div class="result-data">Pega el mensaje completo con la sección "🔒 TOKEN DE SEGURIDAD".</div>';
+      return;
+    }
+    const datos = await decryptPayload(encMatch[1].trim());
+    if (!datos){
+      verifyResult.classList.add('show','fail');
+      verifyResult.innerHTML = '<div class="result-title">❌ TOKEN INVÁLIDO · Mensaje alterado</div><div class="result-data">No se pudo descifrar el token.\nEl mensaje fue modificado o la clave no coincide.</div>';
+      return;
+    }
+    const detalle = (datos.d || []).map((v,i) => (v===1 ? '✅ P'+(i+1) : '❌ P'+(i+1))).join('\n');
+    const valido = datos.m === MATERIA_NOMBRE && datos.c === CLASE_NUMERO && typeof datos.p === 'number';
+    verifyResult.classList.add('show', valido ? 'ok' : 'warn');
+    verifyResult.innerHTML =
+      '<div class="result-title">'+(valido ? '✅ MENSAJE VÁLIDO' : '⚠️ Datos con valores inesperados')+'</div>' +
+      '<div class="result-data">' +
+      '<b>📚 Materia:</b> '+(datos.m||'—')+'\n' +
+      '<b>🏫 Clase:</b> '+(datos.c||'—')+'\n\n' +
+      '<b>🧑 Nombre:</b> '+(datos.n||'—')+'\n' +
+      '<b>🆔 Cédula:</b> '+(datos.cc||'—')+'\n' +
+      '<b>🎯 Puntos:</b> '+(datos.p||0)+' / 20\n' +
+      '<b>✅ Aciertos:</b> '+(datos.a||0)+' de 7\n' +
+      '<b>🕒 Fecha:</b> '+(datos.f||'—')+'\n\n' +
+      '<b>📋 Detalle:</b>\n'+detalle+'</div>';
+  });
+
+  /* ============================================================
+     ENVÍO WHATSAPP
+     ============================================================ */
+  const waBtn = document.getElementById('waBtn');
+  waBtn.addEventListener('click', async () => {
+    waBtn.disabled = true;
+    try{
+      const nombre = (nameInput.value || '').trim() || 'Estudiante';
+      const cedula = (cedInput.value || '').trim() || 'sin cédula';
+      const puntos = calculatePoints();
+      const aciertos = countCorrect();
+      const pct = Math.round(puntos/TOTAL_POINTS*100);
+      let emoji, estado;
+      if (pct === 100){ emoji='🌟'; estado='¡PERFECTO!'; }
+      else if (pct >= 80){ emoji='👏'; estado='¡Excelente!'; }
+      else if (pct >= 60){ emoji='💪'; estado='Aprobado'; }
+      else if (pct >= 40){ emoji='📖'; estado='Necesito repasar'; }
+      else { emoji='🔁'; estado='Debo repasar más'; }
+      const fecha = buildFechaStr();
+      let detalle = '';
+      examAnswers.forEach((a,i) => {
+        const ok = a && a.correct ? '✅' : '❌';
+        const pts = (a && a.correct) ? QUESTION_POINTS[i] : 0;
+        detalle += ok+' P'+(i+1)+' ('+pts+' pts)\n';
+      });
+      const tokenCorto = generateToken(nombre, cedula, puntos, aciertos, fecha);
+      const tokenEnc = await generateEncryptedToken();
+      const texto =
+`¡Hola! 🎓
+
+📝 *EVALUACIÓN · HTML5 · FORMULARIOS Y CSS*
+🏫 Fundabit Isla de Coche
+👨‍🏫 Prof. Luis Vásquez
+
+📚 *Materia:* ${MATERIA_NOMBRE}
+🏫 *Clase:* ${CLASE_NUMERO}
+
+🧑 Nombre: *${nombre}*
+🆔 Cédula: *${cedula}*
+
+🎯 Puntos: *${puntos} / ${TOTAL_POINTS} pts*
+✅ Correctas: *${aciertos} de ${TOTAL_QUESTIONS}*
+📈 Porcentaje: *${pct}%*
+${emoji} Estado: ${estado}
+
+📋 *Detalle:*
+${detalle}
+🕒 Fecha: ${fecha}
+
+🔐 *CÓDIGO CORTO:*
+\`${tokenCorto}\`
+
+🔒 *TOKEN DE SEGURIDAD:*
+\`${tokenEnc}\`
+
+Enviado desde la clase interactiva ✨`;
+      const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(texto);
+      window.open(url, '_blank');
+    } catch(e){
+      showToast('❌ Error generando el token cifrado');
+      console.error(e);
+    } finally {
+      waBtn.disabled = false;
+    }
+  });
+
+  /* ============================================================
+     CONFETI
+     ============================================================ */
+  function confetti(){
+    const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a06cd5','#5ee7df','#ffffff'];
+    for (let i = 0; i < 60; i++){
+      const p = document.createElement('div');
+      p.className = 'confetti';
+      p.style.left = Math.random()*100 + 'vw';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.width = (6+Math.random()*8)+'px';
+      p.style.height = (10+Math.random()*12)+'px';
+      p.style.animationDelay = (Math.random()*0.7)+'s';
+      p.style.animationDuration = (1.6+Math.random()*1.4)+'s';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3600);
+    }
+  }
+
+  /* ============================================================
+     ARRANQUE
+     ============================================================ */
+  if (hasStarted && savedIndex > 0){
+    goTo(savedIndex);
+    setTimeout(() => showToast('👋 ¡Bienvenido de nuevo!\nContinuando en la diapositiva '+(savedIndex+1)), 400);
+  } else {
+    goTo(0);
+    checkForm();
+  }
+
+  window.addEventListener('beforeunload', stopSpeaking);
+  window.addEventListener('pagehide', stopSpeaking);
+  if (isTeacherMode){
+    setTimeout(() => verifyOverlay.classList.add('show'), 500);
+  }
+})();
+</script>
+</body>
+</html>
