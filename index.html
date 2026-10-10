@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitectura Móvil ARM · Prof. Luis Vásquez · Fundabit Isla de Coche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--c1:#ff6b6b;--c2:#4ecdc4;--c3:#ffe66d;--c4:#a06cd5;--c5:#5ee7df;--wa1:#25D366;--wa2:#128C7E;--soc:#0a1a2e;--soc2:#061222;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;font-family:'Nunito',system-ui,sans-serif;background:#0b0a1f;color:#fff;}
+body::before{content:'';position:fixed;inset:-20%;background:radial-gradient(circle at 20% 25%,rgba(160,108,213,.40),transparent 45%),radial-gradient(circle at 80% 70%,rgba(78,205,196,.30),transparent 45%),radial-gradient(circle at 50% 100%,rgba(255,107,107,.25),transparent 50%);animation:blobFloat 20s ease-in-out infinite alternate;z-index:0;pointer-events:none;}
+@keyframes blobFloat{from{transform:translate(0,0) scale(1);}to{transform:translate(-4%,4%) scale(1.15);}}
+.progress{position:fixed;top:0;left:0;width:100%;height:5px;background:rgba(255,255,255,.07);z-index:100;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--c1),var(--c3),var(--c2),var(--c4));background-size:300% 100%;animation:gradShift 4s linear infinite;transition:width .45s cubic-bezier(.34,1.4,.64,1);box-shadow:0 0 14px rgba(78,205,196,.8);}
+@keyframes gradShift{to{background-position:300% 0;}}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:99;background:linear-gradient(180deg,rgba(11,10,31,.92),rgba(11,10,31,0));pointer-events:none;}
+.eval-title{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.9rem,2vw,1.2rem);letter-spacing:1px;background:linear-gradient(135deg,#ffe66d,#ff6b6b,#4ecdc4);background-size:200% 200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradShift 6s ease infinite;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));display:flex;align-items:center;gap:8px;pointer-events:auto;}
+.eval-title .dot-ev{width:10px;height:10px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 12px #ff6b6b;animation:pulse 1.5s ease-in-out infinite;}
+.counter{font-family:'Fredoka',sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:8px;pointer-events:auto;}
+.counter b{color:#4ecdc4;font-size:1.05rem;}
+.lock-badge{display:none;align-items:center;gap:4px;font-size:.7rem;padding:2px 8px;background:rgba(255,230,109,.15);border:1px solid rgba(255,230,109,.4);border-radius:999px;color:#ffe66d;letter-spacing:.5px;}
+.lock-badge.show{display:inline-flex;}
+.brand{position:fixed;bottom:16px;left:22px;z-index:100;background:#fff;border-radius:12px;padding:6px 12px;box-shadow:0 6px 22px rgba(0,0,0,.45);transition:transform .3s;display:flex;align-items:center;gap:8px;}
+.brand img{height:36px;display:block;}
+.brand:hover{transform:translateY(-4px) scale(1.05);}
+.slide-footer{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.62rem,1.4vw,.82rem);letter-spacing:2px;color:rgba(94,231,223,.55);text-transform:uppercase;pointer-events:none;z-index:5;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.slide-footer::before,.slide-footer::after{content:'';width:24px;height:1px;background:linear-gradient(90deg,transparent,rgba(94,231,223,.5),transparent);}
+.slide-footer b{color:rgba(255,230,109,.85);font-weight:700;}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(15,10,40,.96);color:#fff;padding:1rem 1.6rem;border-radius:16px;font-family:'Fredoka',sans-serif;font-size:clamp(.9rem,2vw,1.1rem);z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;border:1px solid rgba(255,230,109,.35);box-shadow:0 12px 40px rgba(0,0,0,.6);max-width:80vw;text-align:center;line-height:1.4;white-space:pre-line;}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.deck{position:relative;width:100vw;height:100vh;z-index:1;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:7vh 4vw 11vh;text-align:center;opacity:0;visibility:hidden;transform:scale(.92) translateY(20px);transition:opacity .5s,transform .5s cubic-bezier(.34,1.3,.64,1),visibility .5s;overflow-y:auto;scrollbar-width:none;}
+.slide::-webkit-scrollbar{display:none;}
+.slide.active{opacity:1;visibility:visible;transform:scale(1) translateY(0);}
+.slide.active .anim{animation:popIn .65s cubic-bezier(.34,1.56,.64,1) both;animation-delay:var(--d,0s);}
+@keyframes popIn{from{opacity:0;transform:translateY(34px) scale(.88);}to{opacity:1;transform:translateY(0) scale(1);}}
+h1,h2,h3{font-family:'Fredoka',sans-serif;line-height:1.15;}
+h2{font-size:clamp(1.3rem,3.6vw,2.3rem);font-weight:700;margin-bottom:.5rem;}
+.lead{font-size:clamp(.88rem,2vw,1.2rem);color:rgba(255,255,255,.82);margin-bottom:.7rem;}
+.emoji{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1;margin-bottom:.5rem;}
+.emoji.big{font-size:clamp(2.4rem,6vw,4rem);}
+.cover-title{font-size:clamp(2rem,8vw,5.2rem);font-weight:700;letter-spacing:-.02em;line-height:.95;}
+.grad{background:linear-gradient(135deg,#ff6b6b,#ffe66d,#4ecdc4,#a06cd5,#ff6b6b);background-size:300% 300%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradShift 6s ease infinite;}
+.cover-sub{font-size:clamp(.95rem,2.2vw,1.3rem);margin-top:.6rem;color:rgba(255,255,255,.85);font-weight:700;}
+.prof-tag{display:inline-flex;align-items:center;gap:.5rem;margin-top:.9rem;padding:.55rem 1.4rem;border-radius:999px;background:linear-gradient(135deg,rgba(255,230,109,.16),rgba(160,108,213,.16));border:1px solid rgba(255,230,109,.5);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.85rem,2vw,1.1rem);color:#ffe66d;letter-spacing:1px;}
+.prof-tag .prof-icon{font-size:1.15em;}
+.badge{display:inline-block;padding:6px 18px;border-radius:999px;background:rgba(78,205,196,.15);border:1px solid rgba(78,205,196,.5);color:#5ee7df;font-size:clamp(.7rem,1.6vw,.9rem);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.3rem;}
+.cards{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;width:100%;max-width:1120px;}
+.card{flex:1 1 190px;max-width:300px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:1rem .95rem;backdrop-filter:blur(8px);transition:transform .3s,box-shadow .3s,border-color .3s;}
+.card:hover{transform:translateY(-9px) scale(1.03);border-color:rgba(78,205,196,.65);box-shadow:0 14px 40px rgba(78,205,196,.22);}
+.card h3{font-size:clamp(.95rem,1.9vw,1.15rem);margin-bottom:.35rem;color:#ffe66d;}
+.card p{font-size:clamp(.75rem,1.55vw,.92rem);color:rgba(255,255,255,.8);line-height:1.5;}
+.fact{margin-top:1rem;background:rgba(255,230,109,.1);border-left:5px solid #ffe66d;border-radius:12px;padding:.8rem 1.2rem;font-size:clamp(.82rem,1.8vw,1.05rem);max-width:820px;text-align:left;color:rgba(255,255,255,.92);}
+.tags{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.1rem;max-width:900px;}
+.tag{font-family:'Courier New',monospace;background:rgba(160,108,213,.18);border:1px solid rgba(160,108,213,.55);color:#d6bcff;padding:7px 14px;border-radius:999px;font-size:clamp(.72rem,1.7vw,.95rem);}
+.tier-hero{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:.6rem;flex-wrap:wrap;}
+.tier-hero .tier-icon{font-size:clamp(3rem,8vw,5rem);line-height:1;filter:drop-shadow(0 0 24px currentColor);}
+.tier-hero .tier-title{font-family:'Fredoka',sans-serif;font-size:clamp(1.6rem,4vw,2.8rem);font-weight:700;line-height:1.1;text-align:left;}
+.tier-hero .tier-sub{display:block;font-size:clamp(.75rem,1.6vw,.95rem);color:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:.2rem;}
+.price-tag{display:inline-block;font-family:'Fredoka',sans-serif;font-size:clamp(1rem,2.2vw,1.4rem);font-weight:700;padding:.5rem 1.4rem;border-radius:999px;margin-bottom:1rem;letter-spacing:1.5px;}
+.tier-high .tier-icon,.tier-high .tier-title{color:#ff8f8f;}
+.tier-high .price-tag{background:linear-gradient(135deg,rgba(255,107,107,.28),rgba(255,107,107,.1));border:2px solid rgba(255,107,107,.7);color:#ff8f8f;}
+.tier-mid .tier-icon,.tier-mid .tier-title{color:#ffe66d;}
+.tier-mid .price-tag{background:linear-gradient(135deg,rgba(255,230,109,.28),rgba(255,230,109,.1));border:2px solid rgba(255,230,109,.7);color:#ffe66d;}
+.tier-low .tier-icon,.tier-low .tier-title{color:#7dfff0;}
+.tier-low .price-tag{background:linear-gradient(135deg,rgba(78,205,196,.28),rgba(78,205,196,.1));border:2px solid rgba(78,205,196,.7);color:#7dfff0;}
+.specs-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .9rem;margin-top:.8rem;width:100%;max-width:920px;text-align:left;}
+.specs-grid .k{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.72rem,1.55vw,.9rem);color:#5ee7df;background:rgba(94,231,223,.08);padding:.5rem .85rem;border-radius:10px;border:1px solid rgba(94,231,223,.3);display:flex;align-items:center;gap:.4rem;}
+.specs-grid .v{font-size:clamp(.68rem,1.45vw,.85rem);color:rgba(255,255,255,.9);background:rgba(255,255,255,.04);padding:.5rem .85rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;}
+.specs-grid .v b{color:#fff;}
+.price-compare{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-top:1.2rem;width:100%;max-width:900px;text-align:left;}
+.price-compare .col{padding:.9rem;border-radius:14px;border:1.5px solid;}
+.price-compare .col.up{background:linear-gradient(135deg,rgba(255,107,107,.12),rgba(255,107,107,.04));border-color:rgba(255,107,107,.5);}
+.price-compare .col.down{background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(78,205,196,.04));border-color:rgba(78,205,196,.5);}
+.price-compare .col h4{font-family:'Fredoka',sans-serif;font-size:clamp(.85rem,1.75vw,1.05rem);margin-bottom:.5rem;}
+.price-compare .col.up h4{color:#ff8f8f;}
+.price-compare .col.down h4{color:#7dfff0;}
+.price-compare .col ul{list-style:none;padding:0;}
+.price-compare .col li{font-size:clamp(.68rem,1.4vw,.82rem);color:rgba(255,255,255,.85);padding:.3rem 0;line-height:1.35;}
+.factors-table{display:grid;grid-template-columns:auto 1.1fr 1fr 1fr;gap:.4rem;margin-top:1rem;width:100%;max-width:1000px;text-align:left;font-size:clamp(.65rem,1.35vw,.8rem);}
+.factors-table .head{font-family:'Fredoka',sans-serif;font-weight:700;color:#ffe66d;padding:.5rem .6rem;background:rgba(255,230,109,.08);border-radius:8px;text-align:center;}
+.factors-table .cell{padding:.5rem .6rem;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.9);line-height:1.3;}
+.factors-table .cell.idx{font-family:'Fredoka',sans-serif;font-weight:700;color:#5ee7df;text-align:center;}
+.factors-table .cell.up{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.25);}
+.factors-table .cell.down{background:rgba(78,205,196,.08);border-color:rgba(78,205,196,.25);}
+.ports-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-top:1rem;width:100%;max-width:1000px;text-align:left;}
+.port-card{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:.85rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;transition:all .3s;}
+.port-card:hover{transform:translateY(-6px);border-color:rgba(94,231,223,.6);box-shadow:0 12px 32px rgba(94,231,223,.2);}
+.port-svg{width:100%;max-width:130px;height:70px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,0,0,.5),rgba(20,20,40,.5));border-radius:10px;border:1px solid rgba(255,255,255,.1);padding:6px;}
+.port-svg svg{max-width:100%;max-height:100%;}
+.port-card h4{font-family:'Fredoka',sans-serif;font-size:clamp(.75rem,1.6vw,.95rem);color:#ffe66d;text-align:center;margin:0;}
+.port-card p{font-size:clamp(.6rem,1.3vw,.75rem);color:rgba(255,255,255,.75);text-align:center;line-height:1.35;margin:0;}
+.port-card .port-brand{font-family:'Courier New',monospace;font-size:clamp(.55rem,1.2vw,.7rem);color:#5ee7df;background:rgba(94,231,223,.1);padding:2px 8px;border-radius:999px;border:1px solid rgba(94,231,223,.3);letter-spacing:1px;}
+.damage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin-top:1rem;width:100%;max-width:1080px;text-align:left;}
+.damage-card{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);border-radius:16px;padding:.9rem;transition:all .3s;}
+.damage-card:hover{transform:translateY(-6px);border-color:rgba(255,107,107,.6);box-shadow:0 12px 32px rgba(255,107,107,.2);}
+.damage-card .damage-icon{font-size:clamp(1.6rem,3.5vw,2.2rem);line-height:1;margin-bottom:.4rem;}
+.damage-card h4{font-family:'Fredoka',sans-serif;font-size:clamp(.85rem,1.75vw,1.05rem);color:#ffe66d;margin-bottom:.3rem;}
+.damage-pct{display:inline-block;font-family:'Fredoka',sans-serif;font-size:clamp(.72rem,1.45vw,.88rem);font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:1px;margin-bottom:.4rem;}
+.damage-pct.high{background:linear-gradient(135deg,rgba(255,107,107,.35),rgba(255,107,107,.15));border:1px solid #ff6b6b;color:#ffb0b0;}
+.damage-pct.mid{background:linear-gradient(135deg,rgba(255,230,109,.28),rgba(255,183,77,.15));border:1px solid rgba(255,230,109,.6);color:#ffe66d;}
+.damage-pct.low{background:linear-gradient(135deg,rgba(78,205,196,.25),rgba(94,231,223,.15));border:1px solid rgba(78,205,196,.55);color:#7dfff0;}
+.damage-card p{font-size:clamp(.62rem,1.35vw,.78rem);color:rgba(255,255,255,.8);line-height:1.4;margin:.25rem 0 0;}
+.damage-card .cost{display:block;margin-top:.4rem;font-size:clamp(.58rem,1.25vw,.72rem);color:#ffe66d;font-weight:700;}
+.buy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.7rem;margin-top:1rem;width:100%;max-width:1080px;text-align:left;}
+.buy-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:.8rem;transition:transform .3s,border-color .3s;}
+.buy-item:hover{transform:translateY(-5px);border-color:rgba(78,205,196,.55);}
+.buy-icon{font-size:1.5rem;margin-bottom:.3rem;}
+.buy-item h4{font-family:'Fredoka',sans-serif;font-size:clamp(.82rem,1.7vw,.98rem);color:#ffe66d;margin-bottom:.3rem;}
+.buy-item p{font-size:clamp(.65rem,1.35vw,.78rem);color:rgba(255,255,255,.8);line-height:1.4;}
+.soc-stage{position:relative;width:100%;max-width:1180px;margin-top:.6rem;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:16px;align-items:start;}
+.soc-col{display:flex;flex-direction:column;min-width:0;}
+.phone-col{display:flex;flex-direction:column;align-items:center;padding-top:20px;}
+.soc{position:relative;width:100%;aspect-ratio:16/10;background:radial-gradient(circle at 30% 40%,rgba(10,26,46,.6),transparent 60%),radial-gradient(circle at 75% 70%,rgba(30,60,110,.35),transparent 55%),linear-gradient(135deg,var(--soc) 0%,var(--soc2) 50%,#03080f 100%);border-radius:16px;border:2px solid #1e3a5c;box-shadow:inset 0 0 80px rgba(0,0,0,.8),inset 0 0 12px rgba(94,231,223,.15),0 18px 50px rgba(0,0,0,.55),0 0 44px rgba(94,231,223,.14);overflow:hidden;}
+.soc::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,rgba(30,90,140,.10) 0 1px,transparent 1px 22px),repeating-linear-gradient(90deg,rgba(30,90,140,.10) 0 1px,transparent 1px 22px);pointer-events:none;z-index:0;}
+.soc-brand{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.5rem,1.1vw,.68rem);letter-spacing:2.5px;color:rgba(120,200,240,.55);z-index:5;pointer-events:none;text-transform:uppercase;}
+.soc-brand b{color:rgba(94,231,223,.9);}
+.soc-chip{position:absolute;border-radius:10px;padding:5px;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;transition:all .35s;border:2px solid;position:relative;overflow:hidden;}
+.soc-chip .chip-icon{font-size:clamp(1rem,2.2vw,1.6rem);line-height:1;margin-bottom:2px;}
+.soc-chip .chip-label{font-size:clamp(.5rem,1.1vw,.72rem);letter-spacing:1px;color:rgba(255,255,255,.9);}
+.soc-chip .chip-sub{font-size:clamp(.4rem,.9vw,.58rem);color:rgba(255,255,255,.55);margin-top:1px;font-family:'Nunito';}
+.chip-cpu{top:8%;left:6%;width:44%;height:44%;background:linear-gradient(135deg,rgba(255,107,107,.28),rgba(255,107,107,.10));border-color:rgba(255,107,107,.7);box-shadow:inset 0 0 22px rgba(255,107,107,.15),0 4px 12px rgba(0,0,0,.4);}
+.chip-cpu::before{content:'';position:absolute;inset:5px;background-image:repeating-linear-gradient(0deg,rgba(255,200,100,.10) 0 1px,transparent 1px 7px);border-radius:6px;pointer-events:none;}
+.cpu-cores{position:relative;z-index:2;display:flex;gap:3px;margin-top:3px;}
+.core{width:clamp(11px,2vw,18px);height:clamp(11px,2vw,18px);border-radius:4px;border:1.5px solid rgba(255,255,255,.3);display:grid;place-items:center;font-size:clamp(.4rem,.8vw,.5rem);font-weight:700;transition:all .3s;}
+.core.big{background:linear-gradient(135deg,rgba(255,107,107,.7),rgba(255,107,107,.35));}
+.core.mid{background:linear-gradient(135deg,rgba(255,230,109,.65),rgba(255,230,109,.3));}
+.core.little{background:linear-gradient(135deg,rgba(78,205,196,.65),rgba(78,205,196,.3));}
+.core.active{box-shadow:0 0 12px currentColor;transform:scale(1.15);}
+.core.big.active{color:#ff8f8f;}
+.core.mid.active{color:#fff5b8;}
+.core.little.active{color:#7dfff0;}
+.chip-gpu{top:8%;right:4%;width:20%;height:22%;background:linear-gradient(135deg,rgba(125,255,240,.28),rgba(125,255,240,.10));border-color:rgba(125,255,240,.7);box-shadow:inset 0 0 18px rgba(125,255,240,.15);}
+.chip-npu{top:34%;right:4%;width:20%;height:22%;background:linear-gradient(135deg,rgba(160,108,213,.30),rgba(160,108,213,.10));border-color:rgba(160,108,213,.75);box-shadow:inset 0 0 18px rgba(160,108,213,.15);}
+.chip-modem{top:60%;right:4%;width:20%;height:22%;background:linear-gradient(135deg,rgba(94,231,223,.28),rgba(94,231,223,.10));border-color:rgba(94,231,223,.7);box-shadow:inset 0 0 18px rgba(94,231,223,.15);}
+.chip-isp{top:56%;left:6%;width:20%;height:20%;background:linear-gradient(135deg,rgba(255,183,77,.28),rgba(255,183,77,.10));border-color:rgba(255,183,77,.7);box-shadow:inset 0 0 18px rgba(255,183,77,.15);}
+.chip-ram{top:80%;left:28%;width:44%;height:14%;background:linear-gradient(135deg,rgba(255,230,109,.28),rgba(255,230,109,.10));border-color:rgba(255,230,109,.7);box-shadow:inset 0 0 18px rgba(255,230,109,.15);flex-direction:row;gap:.5rem;}
+.soc-chip.active{transform:scale(1.04);box-shadow:0 0 34px currentColor,inset 0 0 22px rgba(255,255,255,.3);}
+.chip-cpu.active{color:#ff6b6b;border-color:#ff8f8f;}
+.chip-gpu.active{color:#7dfff0;border-color:#7dfff0;}
+.chip-npu.active{color:#a06cd5;border-color:#c8a4ff;}
+.chip-modem.active{color:#5ee7df;border-color:#5ee7df;}
+.chip-isp.active{color:#ffb74d;border-color:#ffb74d;}
+.chip-ram.active{color:#ffe66d;border-color:#ffe66d;}
+.soc-traces{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;}
+.soc-traces svg{width:100%;height:100%;display:block;}
+.soc-trace{fill:none;stroke:rgba(30,90,140,.55);stroke-width:2.5;stroke-linecap:round;filter:drop-shadow(0 0 2px rgba(94,231,223,.25));transition:stroke .3s,stroke-width .3s;}
+.soc-trace.active{stroke:rgba(94,231,223,.95);stroke-width:3.2;filter:drop-shadow(0 0 6px rgba(94,231,223,.9));}
+.particles-layer{position:absolute;inset:0;z-index:15;pointer-events:none;}
+.particle{position:absolute;width:16px;height:16px;border-radius:50%;z-index:20;pointer-events:none;opacity:0;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:9px;color:#000;}
+.particle.user{background:radial-gradient(circle at 35% 35%,#fff5b8,#ffe66d 65%);box-shadow:0 0 14px #ffe66d;}
+.particle.app{background:radial-gradient(circle at 35% 35%,#b8fff4,#4ecdc4 65%);box-shadow:0 0 14px #4ecdc4;}
+.particle.npu{background:radial-gradient(circle at 35% 35%,#d9b3ff,#a06cd5 65%);box-shadow:0 0 14px #a06cd5;}
+.particle.net{background:radial-gradient(circle at 35% 35%,#b8ffff,#5ee7df 65%);box-shadow:0 0 14px #5ee7df;}
+.particle.large{width:24px;height:24px;font-size:12px;}
+.phone-frame{width:100%;max-width:200px;aspect-ratio:9/18;background:linear-gradient(135deg,#1a1a1a,#0a0a0a);border:3px solid #2a2a2a;border-radius:24px;padding:6px;box-shadow:0 8px 30px rgba(0,0,0,.6),inset 0 0 10px rgba(0,0,0,.8),0 0 24px rgba(94,231,223,.15);position:relative;}
+.phone-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:34%;height:6px;background:#0a0a0a;border-radius:6px;z-index:5;}
+.phone-screen{width:100%;height:100%;background:radial-gradient(circle at 50% 30%,#0b2b1a 0%,#051109 100%);border-radius:18px;display:flex;flex-direction:column;padding:14px 6px 6px;position:relative;overflow:hidden;transition:background .5s,box-shadow .5s;}
+.phone-screen.on{background:radial-gradient(circle at 50% 30%,#0d3a24 0%,#051109 100%);box-shadow:inset 0 0 20px rgba(37,211,102,.35);}
+.phone-header{position:relative;z-index:2;background:rgba(37,211,102,.15);border-radius:8px;padding:4px 6px;display:flex;align-items:center;gap:4px;margin-bottom:5px;opacity:.4;transition:opacity .4s;}
+.phone-screen.on .phone-header{opacity:1;}
+.phone-header .wh-icon{font-size:.9rem;}
+.phone-header .wh-name{font-family:'Fredoka',sans-serif;font-size:.55rem;color:#7dffcf;}
+.phone-chat{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;gap:5px;justify-content:flex-end;padding:4px;}
+.bubble{max-width:80%;padding:5px 8px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.55rem;opacity:0;transform:translateY(6px);transition:all .4s;line-height:1.3;}
+.bubble.show{opacity:1;transform:translateY(0);}
+.bubble.in{background:rgba(255,255,255,.12);color:#fff;border-bottom-left-radius:3px;align-self:flex-start;}
+.bubble.out{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-bottom-right-radius:3px;align-self:flex-end;}
+.phone-label{margin-top:.55rem;font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.55rem,1.2vw,.72rem);letter-spacing:2px;color:rgba(94,231,223,.65);text-align:center;}
+.vn-controls{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;margin-top:.9rem;}
+.vn-btn{font-family:'Fredoka',sans-serif;font-size:clamp(.78rem,1.7vw,.95rem);font-weight:700;padding:.6rem 1.3rem;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;transition:.25s;}
+.vn-btn:hover{background:rgba(78,205,196,.3);border-color:#4ecdc4;transform:translateY(-2px);}
+.vn-btn.primary{background:linear-gradient(135deg,#4ecdc4,#a06cd5);border:none;box-shadow:0 8px 22px rgba(78,205,196,.35);}
+.vn-btn.primary:hover{transform:translateY(-3px) scale(1.04);}
+.cycle-steps{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;margin-top:.9rem;max-width:1000px;}
+.step{font-family:'Fredoka',sans-serif;font-size:clamp(.62rem,1.3vw,.78rem);font-weight:700;padding:.45rem .85rem;border-radius:12px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);transition:all .3s;}
+.step.active{background:linear-gradient(135deg,rgba(78,205,196,.35),rgba(160,108,213,.25));border-color:#4ecdc4;color:#fff;box-shadow:0 0 22px rgba(78,205,196,.55);transform:scale(1.08);}
+.decision-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1.6rem;width:100%;max-width:780px;}
+.decision-btn{font-family:'Fredoka',sans-serif;padding:1.6rem 1.2rem;border-radius:20px;border:2px solid;cursor:pointer;transition:all .3s;display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center;}
+.decision-btn:hover{transform:translateY(-8px) scale(1.03);}
+.decision-btn:active{transform:scale(.97);}
+.decision-btn .dec-icon{font-size:clamp(2.2rem,5vw,3.2rem);line-height:1;}
+.decision-btn .dec-title{font-size:clamp(1rem,2.2vw,1.35rem);font-weight:700;letter-spacing:1px;}
+.decision-btn .dec-desc{font-size:clamp(.72rem,1.5vw,.88rem);font-family:'Nunito';font-weight:700;opacity:.9;line-height:1.4;}
+.decision-btn.exam{background:linear-gradient(135deg,rgba(37,211,102,.28),rgba(78,205,196,.18));border-color:rgba(37,211,102,.75);color:#7dffcf;box-shadow:0 12px 36px rgba(37,211,102,.35);}
+.decision-btn.exam:hover{background:linear-gradient(135deg,rgba(37,211,102,.5),rgba(78,205,196,.4));box-shadow:0 18px 48px rgba(37,211,102,.65);color:#fff;}
+.decision-btn.review{background:linear-gradient(135deg,rgba(94,231,223,.25),rgba(160,108,213,.2));border-color:rgba(94,231,223,.75);color:#7dfff0;box-shadow:0 12px 36px rgba(94,231,223,.35);}
+.decision-btn.review:hover{background:linear-gradient(135deg,rgba(94,231,223,.5),rgba(160,108,213,.4));box-shadow:0 18px 48px rgba(94,231,223,.65);color:#fff;}
+.voice-btn{position:fixed;bottom:22px;right:88px;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:linear-gradient(135deg,rgba(78,205,196,.9),rgba(160,108,213,.9));color:#fff;font-size:1.35rem;cursor:pointer;z-index:101;display:grid;place-items:center;box-shadow:0 8px 24px rgba(78,205,196,.5);transition:all .3s;}
+.voice-btn:hover{transform:scale(1.12);}
+.voice-btn.off{background:linear-gradient(135deg,rgba(120,120,140,.55),rgba(60,60,80,.55));box-shadow:0 6px 18px rgba(0,0,0,.4);color:rgba(255,255,255,.55);}
+.voice-btn.speaking{animation:voicePulse 1.1s ease-in-out infinite;}
+@keyframes voicePulse{0%,100%{box-shadow:0 8px 24px rgba(78,205,196,.5);}50%{box-shadow:0 8px 36px rgba(78,205,196,1);}}
+.replay-btn{position:fixed;bottom:22px;right:150px;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:linear-gradient(135deg,rgba(255,230,109,.9),rgba(255,107,107,.9));color:#0b0a1f;font-size:1.35rem;cursor:pointer;z-index:101;display:grid;place-items:center;box-shadow:0 8px 24px rgba(255,230,109,.45);transition:all .3s;}
+.replay-btn:hover{transform:scale(1.12) rotate(-20deg);}
+.replay-btn.spinning{animation:spinOnce .55s ease-in-out;}
+@keyframes spinOnce{from{transform:rotate(0deg) scale(1);}50%{transform:rotate(-180deg) scale(1.18);}to{transform:rotate(-360deg) scale(1);}}
+.teacher-btn{position:fixed;bottom:22px;right:212px;width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,107,107,.7);background:linear-gradient(135deg,rgba(160,108,213,.95),rgba(255,107,107,.95));color:#fff;font-size:1.35rem;cursor:pointer;z-index:101;display:none;place-items:center;box-shadow:0 8px 24px rgba(160,108,213,.6);}
+.teacher-btn.show{display:grid;}
+.form-wrap{display:flex;flex-direction:column;gap:.6rem;width:100%;max-width:520px;margin-top:1.1rem;}
+.exam-input{font-family:inherit;font-size:clamp(.9rem,1.8vw,1.05rem);padding:.8rem 1.1rem;border-radius:14px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;width:100%;text-align:center;transition:.2s;}
+.exam-input:focus{outline:none;border-color:#4ecdc4;box-shadow:0 0 20px rgba(78,205,196,.35);}
+.exam-input::placeholder{color:rgba(255,255,255,.4);}
+.exam-input.filled{border-color:#25D366;box-shadow:0 0 16px rgba(37,211,102,.35);}
+.form-status{font-size:clamp(.75rem,1.6vw,.9rem);color:#ffe66d;font-weight:700;min-height:1.3em;transition:.25s;text-align:center;}
+.form-status.ok{color:#25D366;}
+.form-status.warn{color:#ff6b6b;}
+.start-btn{margin-top:1rem;font-family:'Fredoka',sans-serif;font-size:clamp(.95rem,2vw,1.15rem);font-weight:700;padding:.85rem 2.2rem;border-radius:999px;border:none;background:linear-gradient(135deg,#4ecdc4,#a06cd5);color:#fff;cursor:not-allowed;opacity:.5;transition:all .3s;box-shadow:0 8px 24px rgba(78,205,196,.3);}
+.start-btn.ready{cursor:pointer;opacity:1;box-shadow:0 12px 32px rgba(78,205,196,.6);animation:pulseGlow 2.2s ease-in-out infinite;}
+.start-btn.ready:hover{transform:translateY(-4px) scale(1.05);}
+@keyframes pulseGlow{0%,100%{box-shadow:0 12px 32px rgba(78,205,196,.5);}50%{box-shadow:0 12px 46px rgba(78,205,196,.9);}}
+.start-btn.locked{animation:shake .5s;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+.q-header{display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap;}
+.q-num-badge{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.75rem,1.6vw,.9rem);padding:4px 14px;border-radius:999px;background:linear-gradient(135deg,#a06cd5,#ff6b6b);letter-spacing:1.2px;}
+.q-points-badge{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.7rem,1.5vw,.85rem);padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,rgba(255,230,109,.3),rgba(78,205,196,.25));border:1px solid rgba(255,230,109,.6);color:#ffe66d;letter-spacing:1.2px;}
+.q-text{font-family:'Fredoka',sans-serif;font-size:clamp(1.05rem,2.6vw,1.7rem);font-weight:700;margin:1rem 0 1.4rem;max-width:900px;line-height:1.35;}
+.q-text .hl{background:linear-gradient(135deg,#ffe66d,#4ecdc4);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;width:100%;max-width:780px;}
+.answer{font-family:'Nunito',sans-serif;font-size:clamp(.85rem,1.8vw,1rem);font-weight:700;padding:.95rem 1.05rem;border-radius:16px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:.7rem;text-align:left;}
+.answer .letter{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);display:grid;place-items:center;font-family:'Fredoka',sans-serif;font-size:.95em;transition:.25s;}
+.answer:hover:not(:disabled){background:rgba(78,205,196,.18);border-color:#4ecdc4;transform:translateY(-3px);}
+.answer:hover:not(:disabled) .letter{background:#4ecdc4;color:#0b0a1f;}
+.answer.selected{background:linear-gradient(135deg,rgba(160,108,213,.45),rgba(78,205,196,.35));border-color:#a06cd5;transform:translateY(-2px);}
+.answer.selected .letter{background:#a06cd5;color:#fff;}
+.answer:disabled{cursor:default;opacity:.85;}
+.answer-hint{margin-top:1.2rem;font-size:clamp(.75rem,1.5vw,.88rem);font-weight:700;color:#ffe66d;min-height:1.4em;}
+.answer-hint.ready{color:#25D366;}
+.score-display{margin:.6rem 0 1rem;text-align:center;}
+.score-big{font-family:'Fredoka',sans-serif;font-size:clamp(3.2rem,11vw,6.5rem);font-weight:700;background:linear-gradient(135deg,#ffe66d,#ff6b6b,#a06cd5);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;}
+.score-big .score-unit{font-size:.4em;color:rgba(255,255,255,.6);-webkit-text-fill-color:rgba(255,255,255,.6);margin-left:.15em;letter-spacing:2px;}
+.score-sub{font-size:clamp(.9rem,2vw,1.15rem);color:rgba(255,255,255,.7);margin-top:.2rem;font-weight:700;letter-spacing:1px;}
+.score-msg{font-size:clamp(1rem,2.2vw,1.3rem);margin-top:.6rem;color:rgba(255,255,255,.88);font-weight:700;}
+.wa-btn{display:inline-flex;align-items:center;gap:.7rem;background:linear-gradient(135deg,var(--wa1),var(--wa2));color:#fff;font-family:'Fredoka',sans-serif;font-size:clamp(1rem,2.2vw,1.3rem);font-weight:700;padding:1rem 2rem;border-radius:999px;border:none;cursor:pointer;transition:transform .25s;box-shadow:0 10px 30px rgba(37,211,102,.4);margin-top:1.2rem;}
+.wa-btn:hover{transform:translateY(-4px) scale(1.04);}
+.wa-btn:disabled{opacity:.6;cursor:not-allowed;}
+.wa-btn .wa-icon{font-size:1.3em;}
+.token-preview{margin-top:1.1rem;padding:.7rem 1.2rem;border-radius:12px;background:linear-gradient(135deg,rgba(160,108,213,.18),rgba(78,205,196,.12));border:1px dashed rgba(160,108,213,.55);font-family:'Courier New',monospace;font-size:clamp(.72rem,1.55vw,.9rem);color:#d6bcff;letter-spacing:1.5px;max-width:560px;text-align:center;word-break:break-all;}
+.token-preview b{display:block;font-family:'Fredoka',sans-serif;font-size:clamp(.65rem,1.4vw,.8rem);color:#ffe66d;letter-spacing:2px;margin-bottom:.35rem;text-transform:uppercase;}
+.token-preview .token-value{display:block;font-size:clamp(.68rem,1.4vw,.82rem);color:#d6bcff;line-height:1.4;padding:.3rem 0;max-height:5em;overflow-y:auto;}
+.token-short{color:#7dffcf !important;}
+.token-encrypted{color:#ffd6a5 !important;font-size:clamp(.6rem,1.2vw,.75rem) !important;}
+.copy-token-btn{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.5rem 1.1rem;border-radius:999px;border:1px solid rgba(255,214,165,.55);background:linear-gradient(135deg,rgba(255,214,165,.18),rgba(160,108,213,.15));color:#ffd6a5;font-family:'Fredoka',sans-serif;font-size:clamp(.72rem,1.5vw,.88rem);font-weight:700;cursor:pointer;transition:all .25s;}
+.copy-token-btn:hover{background:linear-gradient(135deg,rgba(255,214,165,.35),rgba(160,108,213,.3));transform:translateY(-2px);color:#fff;}
+.copy-token-btn.copied{background:linear-gradient(135deg,rgba(37,211,102,.35),rgba(78,205,196,.3));border-color:rgba(37,211,102,.75);color:#7dffcf;}
+.dots{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:100;max-width:80vw;flex-wrap:wrap;justify-content:center;}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);border:none;padding:0;cursor:pointer;transition:.35s;}
+.dot:hover:not(:disabled){background:rgba(255,255,255,.55);}
+.dot.active{width:24px;border-radius:6px;background:#4ecdc4;}
+.dot:disabled{opacity:.2;cursor:not-allowed;}
+.dot.exam-dot{background:rgba(255,230,109,.35);}
+.dot.exam-dot.active{background:#ffe66d;}
+.controls{position:fixed;bottom:16px;right:22px;display:flex;gap:10px;z-index:100;}
+.nav-btn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1.1rem;cursor:pointer;transition:.25s;display:grid;place-items:center;}
+.nav-btn:hover:not(:disabled){background:rgba(78,205,196,.35);transform:scale(1.12);}
+.nav-btn:disabled{opacity:.25;cursor:not-allowed;}
+.nav-btn.locked{animation:shake .5s;}
+.confetti{position:fixed;top:-24px;width:10px;height:16px;z-index:999;pointer-events:none;border-radius:2px;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(108vh) rotate(760deg);opacity:.85;}}
+.verify-overlay{position:fixed;inset:0;background:rgba(5,5,20,.92);backdrop-filter:blur(10px);z-index:5000;display:none;align-items:center;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+.verify-overlay.show{display:flex;}
+.verify-panel{width:100%;max-width:820px;background:linear-gradient(135deg,rgba(20,15,45,.98),rgba(10,10,30,.98));border:2px solid rgba(160,108,213,.6);border-radius:24px;padding:1.6rem;max-height:92vh;overflow-y:auto;}
+.verify-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);gap:1rem;flex-wrap:wrap;}
+.verify-title{font-family:'Fredoka',sans-serif;font-size:clamp(1.1rem,2.4vw,1.5rem);font-weight:700;background:linear-gradient(135deg,#ffe66d,#ff6b6b,#a06cd5);-webkit-background-clip:text;background-clip:text;color:transparent;display:flex;align-items:center;gap:.6rem;}
+.verify-close{background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.5);color:#ff8f8f;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:grid;place-items:center;transition:.25s;}
+.verify-close:hover{background:rgba(255,107,107,.35);transform:rotate(90deg);}
+.verify-intro{font-size:clamp(.82rem,1.7vw,.95rem);color:rgba(255,255,255,.75);margin-bottom:1rem;line-height:1.5;}
+.verify-intro b{color:#ffe66d;}
+.verify-textarea{width:100%;min-height:180px;padding:1rem;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:rgba(0,0,0,.45);color:#fff;font-family:'Courier New',monospace;font-size:clamp(.78rem,1.6vw,.9rem);line-height:1.5;resize:vertical;}
+.verify-textarea:focus{outline:none;border-color:#a06cd5;}
+.verify-actions{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1rem;}
+.verify-btn{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.82rem,1.8vw,1rem);padding:.75rem 1.5rem;border-radius:999px;border:none;cursor:pointer;transition:.25s;display:inline-flex;align-items:center;gap:.5rem;}
+.verify-btn.primary{background:linear-gradient(135deg,#4ecdc4,#a06cd5);color:#fff;}
+.verify-btn.primary:hover{transform:translateY(-3px);}
+.verify-btn.ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;}
+.verify-result{margin-top:1.2rem;padding:1rem 1.3rem;border-radius:14px;font-size:clamp(.85rem,1.7vw,1rem);display:none;line-height:1.5;}
+.verify-result.show{display:block;}
+.verify-result.ok{background:linear-gradient(135deg,rgba(37,211,102,.2),rgba(78,205,196,.15));border:2px solid #25D366;color:#7dffcf;}
+.verify-result.fail{background:linear-gradient(135deg,rgba(255,107,107,.2),rgba(160,108,213,.15));border:2px solid #ff6b6b;color:#ffb0b0;}
+.verify-result.warn{background:linear-gradient(135deg,rgba(255,230,109,.15),rgba(160,108,213,.12));border:2px solid #ffe66d;color:#ffe66d;}
+.verify-result .result-title{font-family:'Fredoka',sans-serif;font-size:clamp(1rem,2.2vw,1.3rem);font-weight:700;margin-bottom:.6rem;}
+.verify-result .result-data{font-family:'Courier New',monospace;font-size:clamp(.72rem,1.5vw,.85rem);background:rgba(0,0,0,.4);padding:.7rem .9rem;border-radius:8px;margin-top:.6rem;white-space:pre-line;color:rgba(255,255,255,.9);border-left:3px solid rgba(255,255,255,.2);}
+.verify-result .result-data b{color:#ffe66d;}
+.verify-footer{margin-top:1.2rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.08);font-size:clamp(.68rem,1.4vw,.8rem);color:rgba(255,255,255,.5);text-align:center;line-height:1.5;}
+.verify-footer b{color:rgba(255,230,109,.8);}
+.timer-display{position:fixed;top:58px;left:50%;transform:translateX(-50%);font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(.95rem,2.2vw,1.3rem);padding:.5rem 1.3rem;border-radius:999px;background:linear-gradient(135deg,rgba(78,205,196,.25),rgba(160,108,213,.25));border:2px solid rgba(78,205,196,.6);color:#5ee7df;letter-spacing:2px;display:none;align-items:center;gap:.5rem;z-index:98;overflow:hidden;}
+.timer-display.show{display:flex;}
+.timer-display .timer-icon{font-size:1.15em;}
+.timer-display .timer-value{font-variant-numeric:tabular-nums;min-width:3.4em;text-align:center;}
+.timer-display .timer-bar{position:absolute;bottom:0;left:0;height:3px;background:currentColor;transition:width 1s linear;}
+.timer-display.warn{background:linear-gradient(135deg,rgba(255,230,109,.25),rgba(255,107,107,.2));border-color:rgba(255,230,109,.7);color:#ffe66d;}
+.timer-display.critical{background:linear-gradient(135deg,rgba(255,107,107,.35),rgba(160,108,213,.25));border-color:#ff6b6b;color:#ff8f8f;animation:timerPulse .8s ease-in-out infinite;}
+@keyframes timerPulse{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.07);}}
+@media(max-width:960px){.soc-stage{grid-template-columns:1fr;gap:12px;}.phone-col{display:none;}.specs-grid{grid-template-columns:1fr;}.ports-grid{grid-template-columns:repeat(2,1fr);}.decision-wrap{grid-template-columns:1fr;gap:1rem;}.factors-table{grid-template-columns:1fr;}.factors-table .head{display:none;}.price-compare{grid-template-columns:1fr;}}
+@media(max-width:640px){.slide{padding:8vh 4vw 16vh;}.controls{bottom:auto;top:14px;right:14px;}.nav-btn{width:40px;height:40px;font-size:.95rem;}.voice-btn{width:44px;height:44px;font-size:1.1rem;bottom:14px;right:74px;}.replay-btn{width:44px;height:44px;font-size:1.1rem;bottom:14px;right:128px;}.teacher-btn{width:44px;height:44px;font-size:1.1rem;bottom:14px;right:182px;}.dots{bottom:22px;left:auto;right:14px;transform:none;}.topbar{padding:0 14px;height:48px;}.eval-title{font-size:.78rem;}.counter{font-size:.68rem;}.brand{bottom:14px;left:12px;}.brand img{height:26px;}.cover-title{font-size:clamp(1.8rem,10vw,3.2rem);}.slide-footer{font-size:.5rem;letter-spacing:.5px;}.timer-display{top:52px;font-size:.82rem;padding:.35rem 1rem;}.ports-grid{grid-template-columns:1fr;}.damage-grid{grid-template-columns:1fr;}.buy-grid{grid-template-columns:1fr;}.answers{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+<div class="topbar">
+  <div class="eval-title"><span class="dot-ev"></span>EVALUACIÓN · ARM</div>
+  <div class="counter"><span><b id="curNum">01</b> / <span id="totNum">24</span></span><span class="lock-badge" id="lockBadge">🔒 en curso</span></div>
+</div>
+<div class="timer-display" id="timerDisplay"><span class="timer-icon">⏱️</span><span class="timer-value" id="timerValue">01:00</span><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+<div class="brand" id="brandLogo"><img src="logo-fundabit.png" alt="Fundabit" onerror="document.getElementById('brandLogo').style.display='none'"></div>
+<button class="replay-btn" id="replayBtn" title="Repetir voz">🔁</button>
+<button class="voice-btn" id="voiceBtn" title="Activar/desactivar voz">🔊</button>
+<button class="teacher-btn" id="teacherBtn" title="Verificador">🔐</button>
+
+<div class="verify-overlay" id="verifyOverlay">
+  <div class="verify-panel">
+    <div class="verify-header">
+      <div class="verify-title">🔐 Verificador de Notas · Profesor</div>
+      <button class="verify-close" id="verifyClose">✕</button>
+    </div>
+    <p class="verify-intro">Pega aquí el <b>mensaje completo de WhatsApp</b> del estudiante. El sistema descifrará el token y validará la integridad.</p>
+    <textarea class="verify-textarea" id="verifyText" placeholder="Pega aquí el mensaje…"></textarea>
+    <div class="verify-actions">
+      <button class="verify-btn primary" id="verifyRun">🔍 Verificar mensaje</button>
+      <button class="verify-btn ghost" id="verifyClear">🗑️ Limpiar</button>
+      <button class="verify-btn ghost" id="verifyExample">📋 Ver ejemplo</button>
+    </div>
+    <div class="verify-result" id="verifyResult"></div>
+    <div class="verify-footer">Fundabit Isla de Coche · <b>Prof. Luis Vásquez</b><br>Sistema de verificación de seguridad · v2.0</div>
+  </div>
+</div>
+
+<div class="deck" id="deck">
+
+<section class="slide">
+  <div class="anim" style="--d:.05s"><span class="badge">Fundabit Isla de Coche</span></div>
+  <h1 class="cover-title anim" style="--d:.15s">Arquitectura Móvil<br><span class="grad">ARM</span></h1>
+  <p class="cover-sub anim" style="--d:.28s">📱 El cerebro de tu celular por dentro</p>
+  <div class="anim" style="--d:.38s"><div class="prof-tag"><span class="prof-icon">👨‍🏫</span><span>Prof. Luis Vásquez</span></div></div>
+  <div class="form-wrap anim" style="--d:.52s">
+    <input type="text" id="studentName" class="exam-input" placeholder="✍️ Nombre y apellido" autocomplete="off">
+    <input type="text" id="studentCedula" class="exam-input" placeholder="🆔 Cédula (6 a 10 dígitos)" autocomplete="off" inputmode="numeric">
+    <p class="form-status" id="formStatus">⚠️ Completa tus datos para comenzar</p>
+    <button class="start-btn" id="startBtn" disabled>🚀 Comenzar clase interactiva</button>
+  </div>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">📱 ¿Qué es la arquitectura ARM?</h2>
+  <p class="lead anim" style="--d:.15s">Es la arquitectura que usan <b>el 99% de los smartphones</b> del mundo. Significa <b>Advanced RISC Machine</b>.</p>
+  <div class="cards">
+    <div class="card anim" style="--d:.30s"><div class="emoji">🇬🇧</div><h3>Origen</h3><p>Nació en 1985 en Cambridge, Inglaterra. Hoy mueve miles de millones de chips al año.</p></div>
+    <div class="card anim" style="--d:.45s"><div class="emoji">⚡</div><h3>RISC</h3><p>Instrucciones simples y rápidas. Consume mucha menos batería que x86.</p></div>
+    <div class="card anim" style="--d:.60s"><div class="emoji">🌍</div><h3>Dominio</h3><p>Está en celulares, tablets, smartwatches, IoT y ahora laptops.</p></div>
+  </div>
+  <p class="fact anim" style="--d:.75s">🌍 Cada año se fabrican <b>más de 25 mil millones de chips ARM</b> — más que humanos en la Tierra.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🧩 El SoC: todo en un solo chip</h2>
+  <p class="lead anim" style="--d:.15s">Un celular no tiene CPU separada, RAM separada ni GPU separada. Todo está integrado en un <b>SoC</b> (System on Chip).</p>
+  <div class="cards">
+    <div class="card anim" style="--d:.22s"><div class="emoji">🧠</div><h3>CPU ARM</h3><p>1-8 núcleos Cortex · el cerebro principal</p></div>
+    <div class="card anim" style="--d:.36s"><div class="emoji">🎮</div><h3>GPU</h3><p>Adreno, Mali · gráficos y juegos</p></div>
+    <div class="card anim" style="--d:.50s"><div class="emoji">🤖</div><h3>NPU</h3><p>Unidad de IA · fotos, voz, traductor</p></div>
+    <div class="card anim" style="--d:.64s"><div class="emoji">📡</div><h3>Modem 5G</h3><p>Internet móvil · llamadas, datos</p></div>
+  </div>
+  <p class="fact anim" style="--d:.80s">📸 Además tiene <b>ISP</b> (cámara), <b>DSP</b> (audio), <b>PMIC</b> (energía) y <b>RAM LPDDR5</b> — todo en un chip del tamaño de tu uña.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">⚡ big.LITTLE: núcleos grandes y pequeños</h2>
+  <p class="lead anim" style="--d:.15s">Un celular tiene <b>dos tipos de núcleos</b> y los alterna según la tarea para ahorrar batería.</p>
+  <div class="specs-grid anim" style="--d:.28s">
+    <div class="k">🔴 Núcleos GRANDES</div><div class="v">Cortex-X · hasta 3.5 GHz · <b>para juegos y edición</b></div>
+    <div class="k">🟢 Núcleos PEQUEÑOS</div><div class="v">Cortex-A · hasta 2 GHz · <b>para WhatsApp, música, chat</b></div>
+    <div class="k">🔄 Cómo funciona</div><div class="v">El sistema decide cuáles activar según la carga</div>
+    <div class="k">🔋 Ventaja</div><div class="v">Ahorra batería: solo usa los grandes cuando hace falta</div>
+    <div class="k">📱 Ejemplo real</div><div class="v">Snapdragon 8 Gen 3 = <b>1 grande + 5 medianos + 2 pequeños</b></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">💡 Si abres <b>WhatsApp</b> → solo pequeños. Si abres <b>Free Fire</b> → se activan los grandes y la GPU.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide tier-high">
+  <div class="tier-hero anim" style="--d:.05s"><div class="tier-icon">🏆</div><div class="tier-title">GAMA ALTA<span class="tier-sub">Premium · 2025-2026</span></div></div>
+  <div class="anim" style="--d:.15s"><span class="price-tag">$800 - $1,500 USD</span></div>
+  <div class="specs-grid anim" style="--d:.25s">
+    <div class="k">🧠 Procesador</div><div class="v">Snapdragon 8 Gen 3 · Apple A17 Pro</div>
+    <div class="k">💾 RAM</div><div class="v">12-16 GB LPDDR5X</div>
+    <div class="k">📦 Almacenamiento</div><div class="v">256 GB a 1 TB UFS 4.0</div>
+    <div class="k">📺 Pantalla</div><div class="v">AMOLED 2K · 120 Hz · 2000 nits</div>
+    <div class="k">📸 Cámara</div><div class="v">50-200 MP · 3-4 lentes · Video 8K</div>
+    <div class="k">🔋 Batería</div><div class="v">5000 mAh · carga 45-120W</div>
+    <div class="k">🔄 Soporte</div><div class="v"><b>4 a 7 años</b> de actualizaciones</div>
+  </div>
+  <div class="price-compare anim" style="--d:.55s">
+    <div class="col up"><h4>💸 SUBE el precio</h4><ul><li>✔ Procesador flagship</li><li>✔ Pantalla AMOLED LTPO</li><li>✔ Cámara con OIS + periscopio</li><li>✔ Titanio o cerámica</li><li>✔ 5G mmWave + WiFi 6E</li><li>✔ Carga rápida 100W+</li></ul></div>
+    <div class="col down"><h4>💰 BAJA el precio</h4><ul><li>• Procesador del año anterior</li><li>• Pantalla LCD o AMOLED básica</li><li>• Sin estabilización óptica</li><li>• Plástico o aluminio</li><li>• Solo 4G LTE</li><li>• Carga lenta 18-25W</li></ul></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">💡 Ejemplos: <b>iPhone 15 Pro, Samsung S24 Ultra, Xiaomi 14 Ultra</b>. Un flagship del año pasado cuesta hasta 40% menos.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide tier-mid">
+  <div class="tier-hero anim" style="--d:.05s"><div class="tier-icon">⚖️</div><div class="tier-title">GAMA MEDIA<span class="tier-sub">Balance · uso diario</span></div></div>
+  <div class="anim" style="--d:.15s"><span class="price-tag">$300 - $600 USD</span></div>
+  <div class="specs-grid anim" style="--d:.25s">
+    <div class="k">🧠 Procesador</div><div class="v">Snapdragon 7 Gen 3 · Dimensity 8000</div>
+    <div class="k">💾 RAM</div><div class="v">6-8 GB LPDDR4X</div>
+    <div class="k">📦 Almacenamiento</div><div class="v">128-256 GB UFS 2.2</div>
+    <div class="k">📺 Pantalla</div><div class="v">AMOLED FHD+ · 90-120 Hz</div>
+    <div class="k">📸 Cámara</div><div class="v">48-64 MP · 2-3 lentes</div>
+    <div class="k">🔋 Batería</div><div class="v">5000 mAh · carga 25-67W</div>
+    <div class="k">🔄 Soporte</div><div class="v"><b>2 a 3 años</b> de actualizaciones</div>
+  </div>
+  <div class="price-compare anim" style="--d:.55s">
+    <div class="col up"><h4>💸 SUBE el precio</h4><ul><li>✔ Pantalla AMOLED 120 Hz</li><li>✔ Cámara con OIS</li><li>✔ RAM 8 GB</li><li>✔ Carga 67W</li><li>✔ 5G completo</li><li>✔ NFC para pagos</li></ul></div>
+    <div class="col down"><h4>💰 BAJA el precio</h4><ul><li>• Pantalla IPS LCD 60 Hz</li><li>• Cámara sin estabilización</li><li>• RAM 6 GB</li><li>• Carga 33W</li><li>• Solo 4G</li><li>• Sin NFC</li></ul></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">💡 Ejemplos: <b>Samsung A55, Redmi Note 13 Pro, Poco X6</b>. El <b>punto óptimo</b> para el 70% de usuarios.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide tier-low">
+  <div class="tier-hero anim" style="--d:.05s"><div class="tier-icon">💰</div><div class="tier-title">GAMA BAJA<span class="tier-sub">Económico · uso básico</span></div></div>
+  <div class="anim" style="--d:.15s"><span class="price-tag">$100 - $250 USD</span></div>
+  <div class="specs-grid anim" style="--d:.25s">
+    <div class="k">🧠 Procesador</div><div class="v">Snapdragon 4 Gen 2 · Helio G85</div>
+    <div class="k">💾 RAM</div><div class="v">3-4 GB LPDDR4</div>
+    <div class="k">📦 Almacenamiento</div><div class="v">32-64 GB eMMC 5.1</div>
+    <div class="k">📺 Pantalla</div><div class="v">IPS LCD · 60-90 Hz</div>
+    <div class="k">📸 Cámara</div><div class="v">13-48 MP · 1-2 lentes</div>
+    <div class="k">🔋 Batería</div><div class="v">5000 mAh · carga 10-18W</div>
+    <div class="k">🔄 Soporte</div><div class="v"><b>1 a 2 años</b> de actualizaciones</div>
+  </div>
+  <div class="price-compare anim" style="--d:.55s">
+    <div class="col up"><h4>💸 SUBE el precio</h4><ul><li>✔ 4 GB RAM (vs 3 GB)</li><li>✔ 128 GB almacenamiento</li><li>✔ Cámara 48 MP</li><li>✔ Pantalla 90 Hz</li><li>✔ NFC para pagos</li><li>✔ Carga 18W</li></ul></div>
+    <div class="col down"><h4>💰 BAJA el precio</h4><ul><li>• RAM de solo 3 GB</li><li>• 32 GB sin microSD</li><li>• Cámara 8-13 MP</li><li>• Pantalla 60 Hz</li><li>• Sin NFC</li><li>• Carga 10W</li></ul></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">💡 Ejemplos: <b>Redmi 13C, Samsung A05, Tecno Spark</b>. Ideal para llamadas, WhatsApp y uso básico.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🎯 ¿Cómo sube o baja el precio de un teléfono?</h2>
+  <p class="lead anim" style="--d:.15s">Estos <b>7 componentes</b> determinan el precio final. Todo estudiante debe conocerlos.</p>
+  <div class="factors-table anim" style="--d:.28s">
+    <div class="head">#</div><div class="head">Componente</div><div class="head">📈 SUBE si…</div><div class="head">📉 BAJA si…</div>
+    <div class="cell idx">1</div><div class="cell">🧠 Procesador</div><div class="cell up">Flagship (Snapdragon 8)</div><div class="cell down">Gama baja (Helio, Unisoc)</div>
+    <div class="cell idx">2</div><div class="cell">💾 RAM</div><div class="cell up">12-16 GB</div><div class="cell down">3-4 GB</div>
+    <div class="cell idx">3</div><div class="cell">📦 Almacenamiento</div><div class="cell up">512 GB - 1 TB UFS 4.0</div><div class="cell down">32-64 GB eMMC</div>
+    <div class="cell idx">4</div><div class="cell">📺 Pantalla</div><div class="cell up">AMOLED 2K · 120 Hz · LTPO</div><div class="cell down">IPS LCD · 60 Hz</div>
+    <div class="cell idx">5</div><div class="cell">📸 Cámara</div><div class="cell up">108-200 MP + OIS + 4 lentes</div><div class="cell down">8-13 MP sin OIS</div>
+    <div class="cell idx">6</div><div class="cell">🔋 Batería</div><div class="cell up">5500 mAh + carga 100W+</div><div class="cell down">4000 mAh + carga 10W</div>
+    <div class="cell idx">7</div><div class="cell">📡 Conectividad</div><div class="cell up">5G + WiFi 6E + NFC</div><div class="cell down">Solo 4G + WiFi 5</div>
+  </div>
+  <p class="fact anim" style="--d:.85s">💡 <b>Regla de oro:</b> el precio sube cuando mejoran <b>5 o más</b> componentes. Baja cuando desmejoran <b>4 o más</b>.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🛒 ¿Qué evaluar antes de comprar?</h2>
+  <p class="lead anim" style="--d:.15s">Revisa estos <b>8 componentes</b> en orden de importancia antes de gastar tu dinero.</p>
+  <div class="buy-grid anim" style="--d:.28s">
+    <div class="buy-item"><div class="buy-icon">🧠</div><h4>Procesador</h4><p>Snapdragon > Helio. Revisa el año: más nuevo = mejor rendimiento.</p></div>
+    <div class="buy-item"><div class="buy-icon">💾</div><h4>RAM</h4><p><b>6 GB mínimo</b> hoy. Más RAM = más apps abiertas sin cerrarse.</p></div>
+    <div class="buy-item"><div class="buy-icon">📦</div><h4>Almacenamiento</h4><p><b>128 GB mínimo</b>. Verifica si acepta microSD.</p></div>
+    <div class="buy-item"><div class="buy-icon">🔋</div><h4>Batería</h4><p><b>5000 mAh ideal</b>. Revisa los watts de carga (W).</p></div>
+    <div class="buy-item"><div class="buy-icon">📺</div><h4>Pantalla</h4><p><b>AMOLED > IPS</b>. <b>90-120 Hz ideal</b> para fluidez.</p></div>
+    <div class="buy-item"><div class="buy-icon">📸</div><h4>Cámara</h4><p>MP no lo es todo. Busca <b>OIS</b> (estabilización óptica).</p></div>
+    <div class="buy-item"><div class="buy-icon">📡</div><h4>Conectividad</h4><p><b>5G + WiFi 6 + NFC</b> (para pagos sin contacto).</p></div>
+    <div class="buy-item"><div class="buy-icon">🔄</div><h4>Sistema</h4><p>Android actualizado o iOS. Revisa años de soporte.</p></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">🎯 <b>Consejo práctico:</b> antes de comprar, busca reseñas del modelo exacto en YouTube. Compara con otros 2-3 y decide.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🔌 Puertos y conectores del celular</h2>
+  <p class="lead anim" style="--d:.15s">Estos son los conectores más comunes. Reconocerlos te ayuda a comprar el cable correcto.</p>
+  <div class="ports-grid anim" style="--d:.28s">
+    <div class="port-card"><div class="port-svg"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="18" width="80" height="24" rx="12" ry="12" fill="none" stroke="#4ecdc4" stroke-width="3"/><rect x="26" y="24" width="68" height="12" rx="6" ry="6" fill="rgba(78,205,196,.25)" stroke="#5ee7df" stroke-width="1.5"/><circle cx="38" cy="30" r="2.5" fill="#5ee7df"/><circle cx="82" cy="30" r="2.5" fill="#5ee7df"/><line x1="30" y1="30" x2="90" y2="30" stroke="rgba(94,231,223,.4)" stroke-width="1"/></svg></div><h4>USB Type-C</h4><span class="port-brand">Más usado hoy</span><p>Simétrico (entra al revés). Carga rápida y transferencia de datos.</p></div>
+    <div class="port-card"><div class="port-svg"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M 25 22 L 95 22 L 88 40 L 32 40 Z" fill="none" stroke="#ff6b6b" stroke-width="3"/><path d="M 32 28 L 88 28 L 84 34 L 36 34 Z" fill="rgba(255,107,107,.25)" stroke="#ff8f8f" stroke-width="1.5"/></svg></div><h4>Micro-USB</h4><span class="port-brand">Antiguo</span><p>Trapezoidal. Ya casi no se usa, pero abunda en gama baja.</p></div>
+    <div class="port-card"><div class="port-svg"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><rect x="35" y="20" width="50" height="20" rx="3" ry="3" fill="none" stroke="#ffe66d" stroke-width="3"/><rect x="41" y="25" width="38" height="10" fill="rgba(255,230,109,.25)" stroke="#ffe66d" stroke-width="1"/><line x1="45" y1="30" x2="75" y2="30" stroke="#ffe66d" stroke-width="1.5" stroke-dasharray="3,2"/></svg></div><h4>Lightning</h4><span class="port-brand">Apple</span><p>Exclusivo de iPhone y iPad antiguos. Reversible.</p></div>
+    <div class="port-card"><div class="port-svg"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="30" r="18" fill="none" stroke="#a06cd5" stroke-width="3"/><circle cx="60" cy="30" r="12" fill="rgba(160,108,213,.25)" stroke="#c8a4ff" stroke-width="1.5"/><circle cx="60" cy="30" r="5" fill="#a06cd5"/></svg></div><h4>Jack 3.5mm</h4><span class="port-brand">Audio</span><p>Para audífonos con cable. Algunos celulares ya no lo incluyen.</p></div>
+    <div class="port-card"><div class="port-svg"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="20" width="60" height="20" fill="none" stroke="#ffb74d" stroke-width="3"/><rect x="35" y="24" width="50" height="12" fill="rgba(255,183,77,.2)" stroke="#ffb74d" stroke-width="1"/><line x1="40" y1="30" x2="80" y2="30" stroke="#ffb74d" stroke-width="1" stroke-dasharray="2,3"/></svg></div><h4>USB Type-A</h4><span class="port-brand">Cargador clásico</span><p>El conector rectangular clásico. En el otro extremo del cable.</p></div>
+    <div class="port-card"><div class="port-svg"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M 20 22 L 100 22 L 92 40 L 28 40 Z" fill="none" stroke="#5ee7df" stroke-width="3"/><path d="M 28 28 L 92 28 L 88 34 L 32 34 Z" fill="rgba(94,231,223,.25)" stroke="#5ee7df" stroke-width="1.5"/><line x1="35" y1="31" x2="85" y2="31" stroke="#5ee7df" stroke-width="1" stroke-dasharray="2,2"/></svg></div><h4>Micro-HDMI</h4><span class="port-brand">Video</span><p>Conecta el celular a un TV o monitor. Cada vez más raro.</p></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">💡 <b>Consejo:</b> el estándar actual es <b>USB-C en ambos extremos</b>. Revisa cuál cable soporta carga rápida.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🔧 Componentes que más se dañan</h2>
+  <p class="lead anim" style="--d:.15s">Los <b>6 componentes</b> que más fallan en un celular y sus costos aproximados de reparación.</p>
+  <div class="damage-grid anim" style="--d:.28s">
+    <div class="damage-card"><div class="damage-icon">📱</div><h4>Pantalla / Táctil</h4><span class="damage-pct high">40% de las fallas</span><p>Caídas, golpes o presión. El vidrio se raya o el táctil deja de responder.</p><span class="cost">💵 Cambio: $30 - $200</span></div>
+    <div class="damage-card"><div class="damage-icon">🔋</div><h4>Batería</h4><span class="damage-pct high">25% de las fallas</span><p>Se hincha por ciclos de carga o calor. Dura menos de lo normal.</p><span class="cost">💵 Cambio: $15 - $60</span></div>
+    <div class="damage-card"><div class="damage-icon">🔌</div><h4>Puerto de carga</h4><span class="damage-pct mid">15% de las fallas</span><p>Se desgasta por forzar cables o por polvo. El cable no carga bien.</p><span class="cost">💵 Cambio: $10 - $40</span></div>
+    <div class="damage-card"><div class="damage-icon">📸</div><h4>Cámara</h4><span class="damage-pct mid">10% de las fallas</span><p>Polvo, caídas o rayones en el lente. Foto borrosa o con manchas.</p><span class="cost">💵 Cambio: $20 - $100</span></div>
+    <div class="damage-card"><div class="damage-icon">🔊</div><h4>Altavoz / Micrófono</h4><span class="damage-pct low">5% de las fallas</span><p>Polvo, agua o caídas. Sonido distorsionado o no te escuchan.</p><span class="cost">💵 Cambio: $8 - $30</span></div>
+    <div class="damage-card"><div class="damage-icon">💧</div><h4>Daño por agua</h4><span class="damage-pct low">5% de las fallas</span><p>Corrosión interna. Aunque diga resistente, no es sumergible.</p><span class="cost">💵 Reparación: $30 - $150+</span></div>
+  </div>
+  <p class="fact anim" style="--d:.85s">🛡️ <b>Prevención:</b> usa <b>funda + vidrio templado</b> desde el día 1. Nunca cargues con cables genéricos.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🎬 ¿Qué pasa dentro del celular al enviar un WhatsApp?</h2>
+  <p class="lead anim" style="--d:.15s;font-size:clamp(.82rem,1.75vw,1.05rem)">Pulsa <b>▶ Reproducir ciclo</b> y observa cómo viaja la información por el SoC.</p>
+  <div class="soc-stage anim" style="--d:.25s">
+    <div class="soc-col">
+      <div class="soc" id="soc">
+        <div class="soc-traces"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="soc-trace" id="tr-user-cpu" d="M50,95 L50,75 L30,60 L30,50"/><path class="soc-trace" id="tr-cpu-npu" d="M50,40 L75,40"/><path class="soc-trace" id="tr-npu-modem" d="M75,50 L75,60"/><path class="soc-trace" id="tr-modem-out" d="M85,70 L98,70"/><path class="soc-trace" id="tr-return" d="M98,72 L98,95 L50,95"/></svg></div>
+        <div class="soc-chip chip-cpu" id="chipCPU"><span class="chip-icon">🧠</span><span class="chip-label">CPU ARM</span><span class="chip-sub">Cortex X4 + A720 + A520</span><div class="cpu-cores"><div class="core big" id="coreBig">X</div><div class="core mid">M</div><div class="core mid">M</div><div class="core little" id="coreLittle">A</div></div></div>
+        <div class="soc-chip chip-gpu" id="chipGPU"><span class="chip-icon">🎮</span><span class="chip-label">GPU</span><span class="chip-sub">Adreno</span></div>
+        <div class="soc-chip chip-npu" id="chipNPU"><span class="chip-icon">🤖</span><span class="chip-label">NPU</span><span class="chip-sub">45 TOPS IA</span></div>
+        <div class="soc-chip chip-modem" id="chipModem"><span class="chip-icon">📡</span><span class="chip-label">Modem 5G</span><span class="chip-sub">Snapdragon X75</span></div>
+        <div class="soc-chip chip-isp" id="chipISP"><span class="chip-icon">📸</span><span class="chip-label">ISP</span><span class="chip-sub">Cámara</span></div>
+        <div class="soc-chip chip-ram" id="chipRAM"><span class="chip-icon">💾</span><span class="chip-label">RAM LPDDR5X · 12 GB</span></div>
+        <div class="particles-layer" id="particlesLayer"></div>
+        <div class="soc-brand">SOC · <b>Snapdragon 8 Gen 3</b> · 4 nm</div>
+      </div>
+      <div class="cycle-steps anim" style="--d:.42s">
+        <div class="step" data-step="1">1️⃣ TOCAR · abrir WhatsApp</div>
+        <div class="step" data-step="2">2️⃣ PROCESAR · núcleo pequeño</div>
+        <div class="step" data-step="3">3️⃣ SUGERIR · NPU (IA)</div>
+        <div class="step" data-step="4">4️⃣ ENVIAR · módem 5G</div>
+        <div class="step" data-step="5">5️⃣ RECIBIR · respuesta en pantalla</div>
+      </div>
+      <div class="vn-controls anim" style="--d:.55s">
+        <button class="vn-btn primary" id="playBtn">▶ Reproducir ciclo</button>
+        <button class="vn-btn" id="resetBtn">↺ Reiniciar</button>
+      </div>
+    </div>
+    <div class="phone-col">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen" id="phoneScreen">
+          <div class="phone-header"><span class="wh-icon">💬</span><span class="wh-name">WhatsApp</span></div>
+          <div class="phone-chat" id="phoneChat">
+            <div class="bubble in" id="bubble1">¡Hola! ¿Cómo estás? 👋</div>
+            <div class="bubble out" id="bubble2">¡Bien! ¿Y tú? 😊</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">📱 PANTALLA</div>
+    </div>
+  </div>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🔍 Repasemos el ciclo completo</h2>
+  <div class="cards">
+    <div class="card anim" style="--d:.18s"><div class="emoji">1️⃣</div><h3>TOCAR</h3><p>Tocas el ícono de WhatsApp y se abre la app.</p></div>
+    <div class="card anim" style="--d:.33s"><div class="emoji">2️⃣</div><h3>PROCESAR</h3><p>El <b>núcleo pequeño</b> procesa el texto. No hace falta uno grande.</p></div>
+    <div class="card anim" style="--d:.48s"><div class="emoji">3️⃣</div><h3>SUGERIR (IA)</h3><p>La <b>NPU</b> sugiere palabras con inteligencia artificial.</p></div>
+    <div class="card anim" style="--d:.63s"><div class="emoji">4️⃣</div><h3>ENVIAR</h3><p>El <b>módem 5G</b> envía el mensaje por la red.</p></div>
+    <div class="card anim" style="--d:.78s"><div class="emoji">5️⃣</div><h3>RECIBIR</h3><p>Llega la respuesta y aparece en la pantalla.</p></div>
+  </div>
+  <p class="fact anim" style="--d:.90s">⚡ Todo esto toma <b>menos de 100 ms</b> y consume menos energía que encender un LED.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <h2 class="anim" style="--d:.05s">🚀 ARM en la actualidad</h2>
+  <p class="lead anim" style="--d:.15s">ARM ya no solo está en celulares. Ahora está en todos lados.</p>
+  <div class="cards">
+    <div class="card anim" style="--d:.22s"><div class="emoji">💻</div><h3>Apple M3</h3><p>ARM en laptops, más rápido que Intel y 5x más eficiente en batería.</p></div>
+    <div class="card anim" style="--d:.37s"><div class="emoji">🤖</div><h3>NPU potente</h3><p>45 TOPS de IA en el chip. Microsoft Copilot+ las aprovecha.</p></div>
+    <div class="card anim" style="--d:.52s"><div class="emoji">🔬</div><h3>Proceso 3nm</h3><p>Transistores más pequeños que un virus. Menos calor, más batería.</p></div>
+    <div class="card anim" style="--d:.67s"><div class="emoji">🔗</div><h3>RAM unificada</h3><p>CPU y GPU comparten memoria. Más rápido que RAM separada.</p></div>
+  </div>
+  <p class="fact anim" style="--d:.82s">🌍 ARM domina celulares (99%), tablets (90%), laptops Apple (100%) y ahora conquista servidores (AWS Graviton).</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <div class="emoji big anim" style="--d:.05s">🎓</div>
+  <h2 class="anim" style="--d:.15s">¿Qué quieres hacer ahora?</h2>
+  <p class="lead anim" style="--d:.28s">Terminaste la parte teórica. Elige tu siguiente paso.</p>
+  <div class="decision-wrap anim" style="--d:.42s">
+    <button class="decision-btn exam" id="decisionExam"><div class="dec-icon">📝</div><div class="dec-title">HACER EL EXAMEN</div><div class="dec-desc">7 preguntas · 20 pts<br>1 min por pregunta</div></button>
+    <button class="decision-btn review" id="decisionReview"><div class="dec-icon">🔄</div><div class="dec-title">VER CLASE DE NUEVO</div><div class="dec-desc">Repasa la clase<br>y luego haz el examen</div></button>
+  </div>
+  <p class="fact anim" style="--d:.60s">💡 Puedes repasar la clase <b>todas las veces que quieras</b> antes de hacer el examen.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="0">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 1 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué significa <span class="hl">ARM</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> Advanced Random Memory</button>
+    <button class="answer anim" style="--d:.38s" data-correct="1"><span class="letter">B</span> Advanced RISC Machine</button>
+    <button class="answer anim" style="--d:.46s" data-correct="0"><span class="letter">C</span> Apple Reduced Micro</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> Automatic RAM Manager</button>
+  </div>
+  <p class="answer-hint" id="hint0">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="1">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 2 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué componente del SoC procesa la <span class="hl">inteligencia artificial</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> La GPU</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> El modem 5G</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> La NPU</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> El ISP</button>
+  </div>
+  <p class="answer-hint" id="hint1">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="2">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 3 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Para qué sirve la tecnología <span class="hl">big.LITTLE</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> Para tener más cámaras</button>
+    <button class="answer anim" style="--d:.38s" data-correct="1"><span class="letter">B</span> Para ahorrar batería alternando núcleos</button>
+    <button class="answer anim" style="--d:.46s" data-correct="0"><span class="letter">C</span> Para hacer el teléfono más grande</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> Para cargar más rápido</button>
+  </div>
+  <p class="answer-hint" id="hint2">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="3">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 4 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Cuál <span class="hl">NO</span> es un componente de un SoC moderno?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> La GPU</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> La NPU</button>
+    <button class="answer anim" style="--d:.46s" data-correct="0"><span class="letter">C</span> El modem 5G</button>
+    <button class="answer anim" style="--d:.54s" data-correct="1"><span class="letter">D</span> El teclado físico</button>
+  </div>
+  <p class="answer-hint" id="hint3">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="4">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 5 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Cuál de estos procesadores es de arquitectura <span class="hl">ARM</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> Intel Core i9</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> AMD Ryzen 9</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> Apple A17 Pro</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> Intel Xeon</button>
+  </div>
+  <p class="answer-hint" id="hint4">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="5">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 6 / 7</span><span class="q-points-badge">⭐ 3 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Por qué los celulares prefieren <span class="hl">ARM</span> sobre x86?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> Porque es más barato de fabricar</button>
+    <button class="answer anim" style="--d:.38s" data-correct="1"><span class="letter">B</span> Porque es más eficiente energéticamente</button>
+    <button class="answer anim" style="--d:.46s" data-correct="0"><span class="letter">C</span> Porque tiene más instrucciones</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> Porque es más antiguo</button>
+  </div>
+  <p class="answer-hint" id="hint5">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide question-slide" data-qindex="6">
+  <div class="q-header anim" style="--d:.05s"><span class="q-num-badge">PREGUNTA 7 / 7</span><span class="q-points-badge">⭐ 2 pts</span></div>
+  <p class="q-text anim" style="--d:.15s">¿Qué componente del SoC procesa la <span class="hl">cámara</span>?</p>
+  <div class="answers">
+    <button class="answer anim" style="--d:.30s" data-correct="0"><span class="letter">A</span> La NPU</button>
+    <button class="answer anim" style="--d:.38s" data-correct="0"><span class="letter">B</span> El modem</button>
+    <button class="answer anim" style="--d:.46s" data-correct="1"><span class="letter">C</span> El ISP</button>
+    <button class="answer anim" style="--d:.54s" data-correct="0"><span class="letter">D</span> La GPU</button>
+  </div>
+  <p class="answer-hint" id="hint6">Selecciona una respuesta para continuar</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <div class="emoji big anim" style="--d:.05s">🏆</div>
+  <h2 class="anim" style="--d:.15s">Tus resultados</h2>
+  <div class="score-display anim" style="--d:.30s">
+    <div class="score-big" id="scoreBig">0<span class="score-unit">/ 20 pts</span></div>
+    <div class="score-sub" id="scoreSub">0 de 7 correctas</div>
+    <div class="score-msg" id="scoreMsg">—</div>
+  </div>
+  <div class="token-preview anim" id="tokenPreview" style="--d:.45s"><b>🔐 Código corto de verificación</b><span id="tokenValue" class="token-value token-short">— — — —</span></div>
+  <div class="token-preview anim" id="tokenPreviewEnc" style="--d:.55s"><b>🔒 Token de seguridad</b><span id="tokenValueEnc" class="token-value token-encrypted">— — — —</span><button class="copy-token-btn" id="copyTokenBtn" type="button">📋 Copiar token</button></div>
+  <p class="fact anim" style="--d:.68s">👉 Pulsa <b>▶</b> para ver la pantalla final con el botón de enviar por WhatsApp.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+<section class="slide">
+  <div class="emoji big anim" style="--d:.05s">🚀</div>
+  <h2 class="anim" style="--d:.15s">¡Envía tus resultados al profesor!</h2>
+  <p class="lead anim" style="--d:.28s">Cada vez que envías un WhatsApp, ARM procesa todo<br>con <b>máxima eficiencia</b> para que tu batería dure más.</p>
+  <button class="wa-btn anim" id="waBtn" style="--d:.42s"><span class="wa-icon">📱</span> Enviar resultados por WhatsApp</button>
+  <div class="token-preview anim" id="tokenPreviewFinal" style="--d:.55s"><b>🔐 Código corto de verificación</b><span id="tokenValueFinal" class="token-value token-short">— — — —</span></div>
+  <div class="token-preview anim" id="tokenPreviewEncFinal" style="--d:.65s"><b>🔒 Token de seguridad</b><span id="tokenValueEncFinal" class="token-value token-encrypted">— — — —</span><button class="copy-token-btn" id="copyTokenBtnFinal" type="button">📋 Copiar token</button></div>
+  <div class="tags anim" style="--d:.75s"><span class="tag">ARM</span><span class="tag">RISC</span><span class="tag">SoC</span><span class="tag">big.LITTLE</span><span class="tag">NPU</span><span class="tag">Snapdragon</span></div>
+  <p class="fact anim" style="--d:.85s">🧑‍🏫 Prof. Luis Vásquez · 0412-3583262<br>🎓 ¡Gracias! Ahora entiendes cómo piensa tu celular.</p>
+  <div class="slide-footer"><b>Fundabit</b> Isla de Coche</div>
+</section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Anterior">◀</button>
+  <button class="nav-btn" id="nextBtn" aria-label="Siguiente">▶</button>
+</div>
+
+<script>
+(function(){
+  const WHATSAPP_NUMBER = '584123583262';
+  const TOTAL_QUESTIONS = 7;
+  const FORM_INDEX = 0, DECISION_INDEX = 14, EXAM_START = 15, EXAM_END = 21;
+  const RESULTS_INDEX = 22, LAST_INDEX_CIERRE = 23;
+  const EXAM_TIME_TOTAL = 60;
+  const QUESTION_POINTS = [3,3,3,3,3,3,2];
+  const TOTAL_POINTS = 20;
+  const SECRET_KEY = 'FundabitCoche2026-LuisVasquez-ARM';
+  const CRYPTO_KEY_STR = 'Fundabit-Coche-LuisVasquez-2026!';
+  const MATERIA_NOMBRE = 'Arquitectura del computador';
+  const CLASE_NUMERO = '02';
+
+  const STORAGE_PROGRESS = 'arqui_arm_progress_v2';
+  const STORAGE_STARTED  = 'arqui_arm_started_v2';
+  const STORAGE_NAME     = 'arqui_arm_name_v2';
+  const STORAGE_CEDULA   = 'arqui_arm_cedula_v2';
+  const STORAGE_EXAM_ANSWERS = 'arqui_arm_answers_v2';
+  const STORAGE_VOICE    = 'arqui_arm_voice_v2';
+  const STORAGE_TIMER    = 'arqui_arm_timer_v2';
+
+  function b64uEnc(bytes){let bin='';for(let i=0;i<bytes.byteLength;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+  function b64uDec(str){let s=str.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return bytes;}
+  async function getKey(){const keyBytes=new TextEncoder().encode(CRYPTO_KEY_STR);return crypto.subtle.importKey('raw',keyBytes,{name:'AES-GCM'},false,['encrypt','decrypt']);}
+  async function encryptPayload(obj){const key=await getKey();const iv=crypto.getRandomValues(new Uint8Array(12));const data=new TextEncoder().encode(JSON.stringify(obj));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data);const combined=new Uint8Array(iv.length+cipher.byteLength);combined.set(iv,0);combined.set(new Uint8Array(cipher),iv.length);return b64uEnc(combined);}
+  async function decryptPayload(b64){try{const key=await getKey();const combined=b64uDec(b64);const iv=combined.slice(0,12);const data=combined.slice(12);const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,data);return JSON.parse(new TextDecoder().decode(dec));}catch(e){return null;}}
+
+  function hashWithKey(data){const payload=data+'||'+SECRET_KEY;let parts=[];for(let seed=0;seed<4;seed++){let h=(0x811c9dc5+seed*0x1000193)>>>0;for(let i=0;i<payload.length;i++){h^=payload.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;h^=(h>>>13);h=Math.imul(h,0x85ebca6b)>>>0;}parts.push(h.toString(16).padStart(8,'0').toUpperCase());}return parts.join('');}
+  function generateToken(nombre,cedula,puntos,aciertos,fecha){const data=['M:'+MATERIA_NOMBRE,'C:'+CLASE_NUMERO,'N:'+nombre.toUpperCase().trim(),'I:'+cedula.trim(),'P:'+puntos,'A:'+aciertos,'F:'+fecha.trim()].join('|');const h=hashWithKey(data);return 'FB26-'+h.slice(0,4)+'-'+h.slice(8,12)+'-'+h.slice(16,20)+'-'+h.slice(24,28);}
+
+  const narrations = {
+    0:"¡Bienvenido a la clase de Arquitectura Móvil ARM, dictada por el profesor Luis Vásquez, en Fundabit Isla de Coche! Hoy aprenderás cómo funciona un celular moderno por dentro. Verás qué es ARM, qué es un SoC, cómo funciona big punto little, las diferencias entre gama alta, media y baja, qué revisar al comprar un teléfono, los puertos, los componentes que más se dañan, y una simulación de WhatsApp. Para comenzar, escribe tu nombre completo y tu cédula de identidad.",
+    1:"ARM significa Advanced RISC Machine. Nació en mil novecientos ochenta y cinco en Cambridge, Inglaterra. Es una arquitectura RISC, es decir, con instrucciones simples y rápidas, diseñada para consumir poca energía. Por eso está presente en el noventa y nueve por ciento de los celulares del mundo. Los procesadores Snapdragon, Apple A17, MediaTek Dimensity y Exynos son todos ARM.",
+    2:"Un celular moderno no tiene CPU separada, RAM separada ni GPU separada. Todo está integrado en un solo chip llamado SoC, o System on Chip. Dentro conviven la CPU ARM, la GPU para juegos, la NPU para inteligencia artificial, el módem cinco ge para internet, el ISP para la cámara, el DSP para audio, y el PMIC para energía.",
+    3:"Los celulares usan big punto little, que significa núcleos grandes y pequeños. Los grandes son potentes y consumen mucha batería. Los pequeños son más lentos pero muy eficientes. Cuando escribes un WhatsApp solo usan los pequeños. Cuando juegas Free Fire se activan los grandes y la GPU.",
+    4:"Gama alta. Cuesta entre ochocientos y mil quinientos dólares. Usa procesadores como el Snapdragon ocho Gen tres o el Apple A17 Pro. Tiene entre doce y dieciséis gigabytes de RAM, almacenamiento hasta un terabyte, pantalla AMOLED dos K con ciento veinte hertz, cámara de cincuenta a doscientos megapíxeles, y hasta cuatro o siete años de soporte.",
+    5:"Gama media. Cuesta entre trescientos y seiscientos dólares. Es el punto óptimo para el setenta por ciento de usuarios. Usa procesadores como el Snapdragon siete Gen tres o Dimensity ocho mil. Tiene seis a ocho gigabytes de RAM, pantalla AMOLED ciento veinte hertz, cámara de cuarenta y ocho a sesenta y cuatro megapíxeles, y dos a tres años de soporte.",
+    6:"Gama baja. Cuesta entre cien y doscientos cincuenta dólares. Usa procesadores Snapdragon cuatro Gen dos o Helio G ochenta y cinco. Tiene tres a cuatro gigabytes de RAM, pantalla IPS LCD sesenta a noventa hertz, cámara de trece a cuarenta y ocho megapíxeles, y uno a dos años de soporte.",
+    7:"El precio de un teléfono depende de siete componentes clave. Primero el procesador. Segundo la RAM. Tercero el almacenamiento. Cuarto la pantalla. Quinto la cámara. Sexto la batería. Séptimo la conectividad. Cuando mejoran varios componentes, el precio sube. Cuando bajan, el precio baja.",
+    8:"Antes de comprar un celular revisa estos ocho componentes: procesador, RAM, almacenamiento, batería, pantalla, cámara, conectividad y sistema. Cada uno influye en el precio y la experiencia de uso.",
+    9:"Estos son los puertos más comunes: USB tipo C, el más usado hoy. Micro USB antiguo. Lightning de Apple. Jack de tres punto cinco milímetros para audífonos. USB tipo A del cargador. Y micro HDMI para video.",
+    10:"Los componentes que más se dañan: pantalla con cuarenta por ciento, batería con veinticinco, puerto de carga con quince, cámara con diez, altavoz con cinco, y daño por agua con cinco. Prevención: usa funda y vidrio templado.",
+    11:"Aquí comienza la simulación. Cuando escribes un WhatsApp los datos siguen este camino: tocas la app, el núcleo pequeño procesa el texto, la NPU sugiere palabras, el módem cinco ge envía el mensaje, y llega la respuesta en pantalla.",
+    12:"Repasemos el ciclo: tocas WhatsApp, el núcleo pequeño procesa, la NPU sugiere, el módem envía, y llega la respuesta. Todo en menos de cien milisegundos.",
+    13:"ARM ya no solo está en celulares. También en laptops Mac con chips M uno, M dos y M tres, en servidores de Amazon, y en millones de dispositivos IoT.",
+    14:"Muy bien, terminaste la parte teórica. Ahora puedes pulsar el botón verde para hacer el examen, o el botón azul para repasar la clase de nuevo. Los controles de navegación están bloqueados en esta pantalla. Debes elegir uno de los dos botones.",
+    15:"Pregunta uno, valor tres puntos. ¿Qué significa ARM? Tienes un minuto.",
+    16:"Pregunta dos, valor tres puntos. ¿Qué componente del SoC procesa la inteligencia artificial? Tienes un minuto.",
+    17:"Pregunta tres, valor tres puntos. ¿Para qué sirve la tecnología big punto little? Tienes un minuto.",
+    18:"Pregunta cuatro, valor tres puntos. ¿Cuál NO es un componente de un SoC moderno? Tienes un minuto.",
+    19:"Pregunta cinco, valor tres puntos. ¿Cuál de estos procesadores es de arquitectura ARM? Tienes un minuto.",
+    20:"Pregunta seis, valor tres puntos. ¿Por qué los celulares prefieren ARM sobre equis ochenta y seis? Tienes un minuto.",
+    21:"Pregunta siete, valor dos puntos. ¿Qué componente del SoC procesa la cámara? Tienes un minuto.",
+    22:"¡Excelente trabajo! Aquí están tus resultados. La evaluación vale veinte puntos. Pulsa siguiente para la pantalla final.",
+    23:"¡Felicidades, terminaste la clase de Arquitectura Móvil ARM! Para enviar tus resultados al profesor Luis Vásquez, pulsa el botón verde de WhatsApp. ¡Gracias por participar!"
+  };
+
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const deck = document.getElementById('deck');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const dotsWrap = document.getElementById('dots');
+  const bar = document.getElementById('progressBar');
+  const curNum = document.getElementById('curNum');
+  const totNum = document.getElementById('totNum');
+  const lockBadge = document.getElementById('lockBadge');
+  const nameInput = document.getElementById('studentName');
+  const cedInput = document.getElementById('studentCedula');
+  const formStatus = document.getElementById('formStatus');
+  const startBtn = document.getElementById('startBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
+  const replayBtn = document.getElementById('replayBtn');
+  const teacherBtn = document.getElementById('teacherBtn');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerValue = document.getElementById('timerValue');
+  const timerBar = document.getElementById('timerBar');
+
+  let current = 0;
+  const LAST_INDEX = slides.length - 1;
+  totNum.textContent = String(slides.length).padStart(2,'0');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const isTeacherMode = urlParams.has('profesor') || urlParams.get('modo')==='profesor' || window.location.hash==='#profesor';
+  if (isTeacherMode) teacherBtn.classList.add('show');
+
+  let examAnswers = new Array(TOTAL_QUESTIONS).fill(null);
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_EXAM_ANSWERS)||'null');if(Array.isArray(saved)&&saved.length===TOTAL_QUESTIONS)examAnswers=saved;}catch(e){}
+  function saveAnswers(){try{localStorage.setItem(STORAGE_EXAM_ANSWERS,JSON.stringify(examAnswers));}catch(e){}}
+
+  const safeGet = (k) => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+  const safeSet = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
+
+  let hasStarted = safeGet(STORAGE_STARTED) === '1';
+  let savedIndex = parseInt(safeGet(STORAGE_PROGRESS) || '0', 10) || 0;
+  if (savedIndex < 0 || savedIndex > LAST_INDEX) savedIndex = 0;
+
+  const savedName = safeGet(STORAGE_NAME);
+  const savedCedula = safeGet(STORAGE_CEDULA);
+  if (savedName) nameInput.value = savedName;
+  if (savedCedula) cedInput.value = savedCedula;
+
+  nameInput.addEventListener('input', () => { safeSet(STORAGE_NAME, nameInput.value); checkForm(); });
+  cedInput.addEventListener('input', () => {
+    cedInput.value = cedInput.value.replace(/\D/g, '').slice(0,10);
+    safeSet(STORAGE_CEDULA, cedInput.value);
+    checkForm();
+  });
+
+  const synth = window.speechSynthesis;
+  const voiceSupported = !!synth && typeof SpeechSynthesisUtterance !== 'undefined';
+  let voiceEnabled = safeGet(STORAGE_VOICE) !== '0';
+  let currentUtterance = null;
+  let spanishVoice = null;
+  let speakToken = 0;
+
+  function pickSpanishVoice(){
+    if (!voiceSupported) return null;
+    const voices = synth.getVoices();
+    if (!voices || !voices.length) return null;
+    const prefer = ['es-VE','es-MX','es-US','es-ES','es-AR','es-CO','es-CL','es-PE','es-419','es'];
+    for (const l of prefer){
+      const v = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(l.toLowerCase()));
+      if (v) return v;
+    }
+    return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('es')) || null;
+  }
+  function refreshVoices(){ spanishVoice = pickSpanishVoice(); }
+  if (voiceSupported){
+    refreshVoices();
+    if (typeof synth.onvoiceschanged !== 'undefined') synth.onvoiceschanged = refreshVoices;
+    setTimeout(refreshVoices, 400); setTimeout(refreshVoices, 1200);
+  }
+  function updateVoiceBtn(){
+    if (!voiceSupported){ voiceBtn.style.display='none'; replayBtn.style.display='none'; return; }
+    if (voiceEnabled){ voiceBtn.classList.remove('off'); voiceBtn.textContent='🔊'; voiceBtn.title='Voz activada'; }
+    else { voiceBtn.classList.add('off'); voiceBtn.textContent='🔇'; voiceBtn.title='Voz silenciada'; }
+  }
+  function stopSpeaking(){
+    if (!voiceSupported) return;
+    speakToken++;
+    try{ synth.cancel(); }catch(e){}
+    currentUtterance = null; voiceBtn.classList.remove('speaking');
+  }
+  function speakSlide(idx, options){
+    if (!voiceSupported) return;
+    options = options || {};
+    const forcePlay = !!options.force;
+    stopSpeaking();
+    if (!voiceEnabled && !forcePlay) return;
+    const text = narrations[idx]; if (!text) return;
+    if (!spanishVoice) refreshVoices();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = (spanishVoice && spanishVoice.lang) || 'es-ES';
+    if (spanishVoice) utter.voice = spanishVoice;
+    utter.rate = 1.0; utter.pitch = 1.05; utter.volume = 1.0;
+    utter.onstart = () => voiceBtn.classList.add('speaking');
+    utter.onend = () => { if (currentUtterance === utter) voiceBtn.classList.remove('speaking'); };
+    utter.onerror = () => { if (currentUtterance === utter) voiceBtn.classList.remove('speaking'); };
+    currentUtterance = utter;
+    const myToken = ++speakToken;
+    setTimeout(() => {
+      if (myToken !== speakToken) return;
+      if (!voiceEnabled && !forcePlay) return;
+      try{ synth.speak(utter); }catch(e){}
+    }, 120);
+  }
+  voiceBtn.addEventListener('click', () => {
+    if (!voiceSupported){ showToast('🔇 Tu navegador no soporta voz.'); return; }
+    voiceEnabled = !voiceEnabled;
+    safeSet(STORAGE_VOICE, voiceEnabled ? '1' : '0');
+    updateVoiceBtn();
+    if (voiceEnabled){ showToast('🔊 Voz activada'); speakSlide(current); }
+    else { showToast('🔇 Voz silenciada'); stopSpeaking(); }
+  });
+  replayBtn.addEventListener('click', () => {
+    if (!voiceSupported){ showToast('🔇 Tu navegador no soporta voz.'); return; }
+    replayBtn.classList.remove('spinning'); void replayBtn.offsetWidth;
+    replayBtn.classList.add('spinning');
+    setTimeout(() => replayBtn.classList.remove('spinning'), 600);
+    if (!voiceEnabled){ voiceEnabled = true; safeSet(STORAGE_VOICE,'1'); updateVoiceBtn(); }
+    speakSlide(current, { force: true });
+    showToast('🔁 Repitiendo explicación…');
+  });
+  updateVoiceBtn();
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopSpeaking(); });
+
+  let examTimerId = null, examSecondsLeft = EXAM_TIME_TOTAL, examTimerRunning = false;
+  function formatTime(sec){ const s=Math.max(0,sec); const m=Math.floor(s/60); const r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
+  function updateTimerUI(){
+    timerValue.textContent = formatTime(examSecondsLeft);
+    const pct = Math.max(0, Math.min(100, (examSecondsLeft/EXAM_TIME_TOTAL)*100));
+    timerBar.style.width = pct + '%';
+    timerDisplay.classList.remove('warn','critical');
+    if (examSecondsLeft <= 10) timerDisplay.classList.add('critical');
+    else if (examSecondsLeft <= 20) timerDisplay.classList.add('warn');
+  }
+  function startTimerForCurrentQuestion(){
+    if (examTimerId){ clearInterval(examTimerId); examTimerId=null; }
+    examTimerRunning = false;
+    examSecondsLeft = EXAM_TIME_TOTAL;
+    safeSet(STORAGE_TIMER, String(examSecondsLeft));
+    timerDisplay.classList.add('show');
+    timerDisplay.classList.remove('warn','critical');
+    updateTimerUI();
+    examTimerRunning = true;
+    examTimerId = setInterval(() => {
+      examSecondsLeft--;
+      safeSet(STORAGE_TIMER, String(examSecondsLeft));
+      updateTimerUI();
+      if (examSecondsLeft <= 0){
+        clearInterval(examTimerId); examTimerId=null; examTimerRunning=false;
+        safeSet(STORAGE_TIMER,'0'); onQuestionTimeUp();
+      }
+    }, 1000);
+  }
+  function stopExamTimer(){
+    if (examTimerId){ clearInterval(examTimerId); examTimerId=null; }
+    examTimerRunning = false;
+    timerDisplay.classList.remove('show','warn','critical');
+  }
+  function onQuestionTimeUp(){
+    const qi = current - EXAM_START;
+    if (qi >= 0 && qi < TOTAL_QUESTIONS){
+      if (!examAnswers[qi] || typeof examAnswers[qi].selectedIdx !== 'number'){
+        examAnswers[qi] = { selectedIdx:-1, correct:0 }; saveAnswers();
+      }
+    }
+    showToast('⏰ ¡Se acabó el tiempo!\nAvanzando…');
+    stopSpeaking();
+    if (current < EXAM_END) goToForce(current+1);
+    else goToForce(RESULTS_INDEX);
+  }
+  function goToForce(i){
+    const target = Math.max(0, Math.min(LAST_INDEX, i));
+    stopSpeaking();
+    current = target;
+    safeSet(STORAGE_PROGRESS, String(current));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx===current));
+    // DOTS con bloqueo en DECISION
+    dots.forEach((d, idx) => {
+      d.classList.toggle('active', idx===current);
+      if (current === DECISION_INDEX){
+        d.disabled = true;
+      } else if (isExamSlide(idx)) d.disabled = (idx !== current);
+      else if (current >= EXAM_START) d.disabled = (idx <= EXAM_END);
+      else d.disabled = hasStarted && idx === FORM_INDEX;
+    });
+    bar.style.width = ((current+1)/slides.length*100) + '%';
+    curNum.textContent = String(current+1).padStart(2,'0');
+    const minAllowed = hasStarted ? 1 : 0;
+    const blockBack = current >= EXAM_START;
+    prevBtn.disabled = (current <= minAllowed) || blockBack;
+    if (current === FORM_INDEX){
+      const {ok} = isFormComplete();
+      nextBtn.disabled = !ok; startBtn.disabled = !ok;
+      startBtn.classList.toggle('ready', ok);
+      checkForm();
+    } else if (isExamSlide(current)){
+      const qi = current - EXAM_START;
+      nextBtn.disabled = !isAnswerSelected(qi);
+    } else if (current === DECISION_INDEX){
+      // 🚫 En la pantalla de decisión se bloquean los controles ◀ ▶
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+    } else { nextBtn.disabled = current === LAST_INDEX; }
+    if (hasStarted) lockBadge.classList.add('show');
+    else lockBadge.classList.remove('show');
+    if (current === RESULTS_INDEX){ updateResults(); updateAllTokens(); if (calculatePoints() >= 14) confetti(); }
+    if (current === LAST_INDEX_CIERRE){ updateAllTokens(); confetti(); }
+    if (current !== 11) stopFlow();
+    if (current >= EXAM_START && current <= EXAM_END) startTimerForCurrentQuestion();
+    else stopExamTimer();
+    if (current > EXAM_END) safeSet(STORAGE_TIMER,'0');
+    speakSlide(current);
+  }
+
+  function isFormComplete(){
+    const nombre = nameInput.value.trim();
+    const cedula = cedInput.value.trim();
+    const nombreOk = nombre.length >= 5 && nombre.split(/\s+/).length >= 2;
+    const cedulaOk = /^\d{6,10}$/.test(cedula);
+    return { ok: nombreOk && cedulaOk, nombreOk, cedulaOk };
+  }
+  function checkForm(){
+    const { ok, nombreOk, cedulaOk } = isFormComplete();
+    nameInput.classList.toggle('filled', nombreOk);
+    cedInput.classList.toggle('filled', cedulaOk);
+    if (ok){ formStatus.textContent='✅ ¡Listo! Pulsa "Comenzar"'; formStatus.className='form-status ok'; }
+    else if (!nombreOk && !cedulaOk){ formStatus.textContent='⚠️ Escribe tu nombre completo y cédula'; formStatus.className='form-status warn'; }
+    else if (!nombreOk){ formStatus.textContent='⚠️ Falta nombre y apellido'; formStatus.className='form-status warn'; }
+    else { formStatus.textContent='⚠️ Falta la cédula (6 a 10 dígitos)'; formStatus.className='form-status warn'; }
+    if (current === FORM_INDEX){
+      startBtn.classList.toggle('ready', ok);
+      startBtn.disabled = !ok;
+      nextBtn.disabled = !ok;
+    }
+  }
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot';
+    if (i >= EXAM_START && i <= EXAM_END) d.classList.add('exam-dot');
+    d.setAttribute('aria-label', 'Ir a la diapositiva '+(i+1));
+    d.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(document.querySelectorAll('.dot'));
+
+  let toastEl = null;
+  function showToast(msg){
+    if (!toastEl){ toastEl = document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  function isExamSlide(idx){ return idx >= EXAM_START && idx <= EXAM_END; }
+  function isAnswerSelected(qi){ return examAnswers[qi] && typeof examAnswers[qi].selectedIdx === 'number'; }
+
+  function goTo(i){
+    const target = Math.max(0, Math.min(LAST_INDEX, i));
+    if (hasStarted && target === FORM_INDEX){
+      showToast('🔒 Ya comenzaste la clase.\nContinúa donde la dejaste.'); return;
+    }
+    if (current === FORM_INDEX && target > FORM_INDEX){
+      const { ok } = isFormComplete();
+      if (!ok){
+        startBtn.classList.add('locked');
+        setTimeout(() => startBtn.classList.remove('locked'), 500);
+        showToast('⚠️ Debes completar nombre y cédula\npara comenzar.'); return;
+      }
+      hasStarted = true; safeSet(STORAGE_STARTED, '1');
+    }
+    // 🚫 Desde DECISION no se puede retroceder con navegación
+    if (current === DECISION_INDEX && target !== DECISION_INDEX){
+      showToast('🎓 Debes pulsar uno de los dos botones\npara continuar');
+      return;
+    }
+    if (target < current && current >= EXAM_START){
+      prevBtn.classList.add('locked');
+      setTimeout(() => prevBtn.classList.remove('locked'), 500);
+      if (isExamSlide(current)) showToast('🔒 No puedes retroceder durante la evaluación.');
+      else showToast('🔒 No puedes volver a la evaluación.');
+      return;
+    }
+    if (isExamSlide(current) && target > current){
+      const qi = current - EXAM_START;
+      if (!isAnswerSelected(qi)){
+        nextBtn.classList.add('locked');
+        setTimeout(() => nextBtn.classList.remove('locked'), 500);
+        showToast('⚠️ Debes responder la pregunta\nantes de continuar.'); return;
+      }
+    }
+    if (current === EXAM_END && target > EXAM_END){
+      const faltan = examAnswers.filter(a => !a || typeof a.selectedIdx !== 'number').length;
+      if (faltan > 0){ showToast('⚠️ Aún tienes '+faltan+' pregunta'+(faltan>1?'s':'')+' sin responder.'); return; }
+    }
+    stopSpeaking();
+    current = target;
+    safeSet(STORAGE_PROGRESS, String(current));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === current));
+    // DOTS con bloqueo en DECISION
+    dots.forEach((d, idx) => {
+      d.classList.toggle('active', idx === current);
+      if (current === DECISION_INDEX){
+        d.disabled = true;
+      } else if (isExamSlide(idx)) d.disabled = (idx !== current);
+      else if (current >= EXAM_START) d.disabled = (idx <= EXAM_END);
+      else d.disabled = hasStarted && idx === FORM_INDEX;
+    });
+    bar.style.width = ((current+1)/slides.length*100) + '%';
+    curNum.textContent = String(current+1).padStart(2,'0');
+    const minAllowed = hasStarted ? 1 : 0;
+    const blockBack = current >= EXAM_START;
+    prevBtn.disabled = (current <= minAllowed) || blockBack;
+    if (current === FORM_INDEX){
+      const {ok} = isFormComplete();
+      nextBtn.disabled = !ok; startBtn.disabled = !ok;
+      startBtn.classList.toggle('ready', ok);
+      checkForm();
+    } else if (isExamSlide(current)){
+      const qi = current - EXAM_START;
+      nextBtn.disabled = !isAnswerSelected(qi);
+    } else if (current === DECISION_INDEX){
+      // 🚫 En la pantalla de decisión se bloquean los controles ◀ ▶
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+    } else { nextBtn.disabled = current === LAST_INDEX; }
+    if (hasStarted) lockBadge.classList.add('show');
+    else lockBadge.classList.remove('show');
+    if (current === RESULTS_INDEX){ updateResults(); updateAllTokens(); if (calculatePoints() >= 14) confetti(); }
+    if (current === LAST_INDEX_CIERRE){ updateAllTokens(); confetti(); }
+    if (current !== 11) stopFlow();
+    if (current >= EXAM_START && current <= EXAM_END) startTimerForCurrentQuestion();
+    else stopExamTimer();
+    if (current > EXAM_END) safeSet(STORAGE_TIMER,'0');
+    speakSlide(current);
+  }
+
+  const next = () => goTo(current + 1);
+  const prev = () => goTo(current - 1);
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  startBtn.addEventListener('click', () => {
+    const { ok } = isFormComplete();
+    if (!ok){
+      startBtn.classList.add('locked');
+      setTimeout(() => startBtn.classList.remove('locked'), 500);
+      showToast('⚠️ Completa nombre y cédula\npara comenzar.'); return;
+    }
+    goTo(1);
+  });
+
+  // TECLADO con bloqueo en DECISION
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (verifyOverlay.classList.contains('show')){
+      if (e.key === 'Escape') verifyOverlay.classList.remove('show');
+      return;
+    }
+    // 🚫 En la pantalla de decisión NO funciona el teclado de navegación
+    if (current === DECISION_INDEX){
+      if (['ArrowRight','ArrowDown',' ','PageDown','ArrowLeft','ArrowUp','PageUp','Home','End'].includes(e.key)){
+        e.preventDefault();
+        showToast('🎓 Debes pulsar uno de los dos botones');
+      }
+      return;
+    }
+    if (['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){ e.preventDefault(); next(); }
+    if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    if (e.key === 'Home') goTo(hasStarted ? 1 : 0);
+    if (e.key === 'End') goTo(LAST_INDEX);
+  });
+
+  // 🚫 NO CAMBIA DE DIAPOSITIVA AL TOCAR PANTALLA
+  let hintShown = false;
+  deck.addEventListener('click', e => {
+    if (e.target.closest('button, input, textarea, a, .answer, .soc-stage, .soc, .phone-col, .vn-controls, .voice-btn, .replay-btn, .teacher-btn, .verify-overlay, .timer-display, .decision-wrap, .decision-btn, .dots, .controls')) return;
+    if (hintShown) return;
+    hintShown = true;
+    showToast('👆 Usa los botones ◀ ▶\npara cambiar de diapositiva');
+    setTimeout(() => { hintShown = false; }, 5000);
+  });
+
+  document.getElementById('decisionExam').addEventListener('click', () => {
+    showToast('📝 ¡Comenzando el examen!');
+    goToForce(EXAM_START);
+  });
+  document.getElementById('decisionReview').addEventListener('click', () => {
+    showToast('🔄 Volviendo al inicio para repasar…');
+    goToForce(1);
+  });
+
+  document.querySelectorAll('.question-slide').forEach(slide => {
+    const qi = parseInt(slide.dataset.qindex, 10);
+    const answers = slide.querySelectorAll('.answer');
+    const hint = slide.querySelector('.answer-hint');
+    if (examAnswers[qi] && typeof examAnswers[qi].selectedIdx === 'number'){
+      const sel = examAnswers[qi].selectedIdx;
+      answers.forEach((b, idx) => { if (idx === sel) b.classList.add('selected'); });
+      hint.textContent = '✅ Respuesta guardada';
+      hint.classList.add('ready');
+    }
+    answers.forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        if (examAnswers[qi] && typeof examAnswers[qi].selectedIdx === 'number'){
+          showToast('🔒 Ya respondiste esta pregunta.'); return;
+        }
+        answers.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        examAnswers[qi] = { selectedIdx: idx, correct: btn.dataset.correct === '1' ? 1 : 0 };
+        saveAnswers();
+        hint.textContent = '✅ Respuesta guardada · Pulsa ▶ para continuar';
+        hint.classList.add('ready');
+        nextBtn.disabled = false;
+        if (voiceSupported && voiceEnabled){
+          speakToken++;
+          try{ synth.cancel(); }catch(e){}
+          voiceBtn.classList.remove('speaking');
+          const fb = new SpeechSynthesisUtterance('Respuesta guardada');
+          fb.lang = (spanishVoice && spanishVoice.lang) || 'es-ES';
+          if (spanishVoice) fb.voice = spanishVoice;
+          fb.rate = 1.05; fb.pitch = 1.0; fb.volume = 0.95;
+          const myToken = speakToken;
+          setTimeout(() => { if (myToken !== speakToken) return; try{ synth.speak(fb); }catch(e){} }, 120);
+        }
+      });
+    });
+  });
+
+  function countCorrect(){ return examAnswers.reduce((s,a) => s + ((a && a.correct) ? 1 : 0), 0); }
+  function calculatePoints(){ return examAnswers.reduce((sum,a,i) => sum + ((a && a.correct) ? QUESTION_POINTS[i] : 0), 0); }
+  function updateResults(){
+    const puntos = calculatePoints();
+    const aciertos = countCorrect();
+    const pct = Math.round(puntos/TOTAL_POINTS*100);
+    document.getElementById('scoreBig').innerHTML = puntos + '<span class="score-unit">/ '+TOTAL_POINTS+' pts</span>';
+    document.getElementById('scoreSub').textContent = aciertos + ' de ' + TOTAL_QUESTIONS + ' correctas';
+    let msg = '';
+    if (pct === 100) msg = '🌟 ¡PERFECTO! Dominas ARM';
+    else if (pct >= 80) msg = '👏 ¡Excelente! Entiendes ARM';
+    else if (pct >= 60) msg = '💪 ¡Bien! Vas por buen camino';
+    else if (pct >= 40) msg = '📖 Repasa un poco más la clase';
+    else msg = '🔁 Vuelve a ver la clase y reinténtalo';
+    document.getElementById('scoreMsg').textContent = msg + '  ·  ' + pct + '%';
+  }
+  function buildFechaStr(){
+    return new Date().toLocaleString('es-VE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+  function buildPayload(){
+    const nombre = (nameInput.value || '').trim() || 'Estudiante';
+    const cedula = (cedInput.value || '').trim() || '00000000';
+    const puntos = calculatePoints();
+    const aciertos = countCorrect();
+    const fecha = buildFechaStr();
+    const detalle = examAnswers.map(a => (a && a.correct) ? 1 : 0);
+    return { m: MATERIA_NOMBRE, c: CLASE_NUMERO, n: nombre, cc: cedula, p: puntos, a: aciertos, f: fecha, d: detalle };
+  }
+  async function generateEncryptedToken(){ return await encryptPayload(buildPayload()); }
+  async function updateAllTokens(){
+    const nombre = (nameInput.value || '').trim() || 'Estudiante';
+    const cedula = (cedInput.value || '').trim() || '00000000';
+    const puntos = calculatePoints();
+    const aciertos = countCorrect();
+    const fecha = buildFechaStr();
+    const tokenCorto = generateToken(nombre, cedula, puntos, aciertos, fecha);
+    ['tokenValue','tokenValueFinal'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = tokenCorto; });
+    try{
+      const tokenEnc = await generateEncryptedToken();
+      ['tokenValueEnc','tokenValueEncFinal'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = tokenEnc; });
+    } catch(e){ console.error(e); }
+  }
+
+  function setupCopyButton(btnId, tokenId){
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const tokenEl = document.getElementById(tokenId);
+      const token = tokenEl ? tokenEl.textContent : '';
+      if (!token || token.includes('—')){ showToast('⏳ Token aún no generado'); return; }
+      try {
+        await navigator.clipboard.writeText(token);
+        btn.classList.add('copied');
+        const original = btn.textContent;
+        btn.textContent = '✅ ¡Copiado!';
+        showToast('📋 Token copiado al portapapeles');
+        setTimeout(() => { btn.classList.remove('copied'); btn.textContent = original; }, 2000);
+      } catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = token; ta.style.position='fixed'; ta.style.left='-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showToast('📋 Token copiado'); }
+        catch(e2){ showToast('❌ No se pudo copiar'); }
+        document.body.removeChild(ta);
+      }
+    });
+  }
+  setupCopyButton('copyTokenBtn', 'tokenValueEnc');
+  setupCopyButton('copyTokenBtnFinal', 'tokenValueEncFinal');
+
+  const soc = document.getElementById('soc');
+  const particlesLayer = document.getElementById('particlesLayer');
+  const chipCPU = document.getElementById('chipCPU');
+  const chipGPU = document.getElementById('chipGPU');
+  const chipNPU = document.getElementById('chipNPU');
+  const chipModem = document.getElementById('chipModem');
+  const chipISP = document.getElementById('chipISP');
+  const chipRAM = document.getElementById('chipRAM');
+  const coreBig = document.getElementById('coreBig');
+  const coreLittle = document.getElementById('coreLittle');
+  const phoneScreen = document.getElementById('phoneScreen');
+  const bubble1 = document.getElementById('bubble1');
+  const bubble2 = document.getElementById('bubble2');
+  const steps = Array.from(document.querySelectorAll('.step'));
+  const playBtn = document.getElementById('playBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const traces = {
+    userCpu: document.getElementById('tr-user-cpu'),
+    cpuNpu: document.getElementById('tr-cpu-npu'),
+    npuModem: document.getElementById('tr-npu-modem'),
+    modemOut: document.getElementById('tr-modem-out'),
+    return: document.getElementById('tr-return')
+  };
+
+  let flowTimeouts = [], flowParticles = [], isPlaying = false;
+  function clearTimeouts(){ flowTimeouts.forEach(t => clearTimeout(t)); flowTimeouts = []; }
+  function removeParticles(){ flowParticles.forEach(p => p.remove()); flowParticles = []; }
+  function clearHighlights(){
+    [chipCPU, chipGPU, chipNPU, chipModem, chipISP, chipRAM, coreBig, coreLittle].forEach(b => { if (b) b.classList.remove('active'); });
+    Object.values(traces).forEach(t => { if (t) t.classList.remove('active'); });
+    steps.forEach(s => s.classList.remove('active'));
+    phoneScreen.classList.remove('on');
+    bubble1.classList.remove('show'); bubble2.classList.remove('show');
+  }
+  function stopFlow(){
+    isPlaying = false;
+    clearTimeouts(); removeParticles(); clearHighlights();
+    if (playBtn) playBtn.textContent = '▶ Reproducir ciclo';
+  }
+  function setStep(n){ steps.forEach(s => s.classList.toggle('active', parseInt(s.dataset.step,10) === n)); }
+  function activateTrace(k){ if (traces[k]) traces[k].classList.add('active'); }
+  function deactivateTrace(k){ if (traces[k]) traces[k].classList.remove('active'); }
+  function spawnParticle(fromEl, toEl, type, duration, size){
+    if (!soc || !fromEl || !toEl) return;
+    const socRect = soc.getBoundingClientRect();
+    const fromRect = fromEl.getBoundingClientRect();
+    const toRect = toEl.getBoundingClientRect();
+    const startX = fromRect.left + fromRect.width/2 - socRect.left;
+    const startY = fromRect.top + fromRect.height/2 - socRect.top;
+    const endX = toRect.left + toRect.width/2 - socRect.left;
+    const endY = toRect.top + toRect.height/2 - socRect.top;
+    const p = document.createElement('div');
+    p.className = 'particle ' + (type || 'app');
+    if (size >= 20) p.classList.add('large');
+    const s = size || 16;
+    p.style.width = s+'px'; p.style.height = s+'px';
+    p.style.left = startX+'px'; p.style.top = startY+'px';
+    const dur = duration || 1000;
+    p.animate([
+      { left:startX+'px', top:startY+'px', opacity:0, transform:'translate(-50%,-50%) scale(.4)' },
+      { opacity:1, offset:.12, transform:'translate(-50%,-50%) scale(1)' },
+      { left:endX+'px', top:endY+'px', opacity:1, transform:'translate(-50%,-50%) scale(1)' },
+      { left:endX+'px', top:endY+'px', opacity:0, transform:'translate(-50%,-50%) scale(.5)' }
+    ], { duration: dur, easing:'cubic-bezier(.4,0,.4,1)', fill:'forwards' });
+    particlesLayer.appendChild(p);
+    flowParticles.push(p);
+    setTimeout(() => { p.remove(); flowParticles = flowParticles.filter(x => x !== p); }, dur + 100);
+  }
+  function playFlow(){
+    stopFlow();
+    isPlaying = true;
+    playBtn.textContent = '⏸ Reproduciendo…';
+    flowTimeouts.push(setTimeout(() => {
+      setStep(1);
+      phoneScreen.classList.add('on');
+      bubble1.classList.add('show');
+      activateTrace('userCpu');
+      spawnParticle(phoneScreen, chipCPU, 'user', 1000, 18);
+    }, 100));
+    flowTimeouts.push(setTimeout(() => {
+      setStep(2);
+      deactivateTrace('userCpu');
+      chipCPU.classList.add('active');
+      coreLittle.classList.add('active');
+      chipRAM.classList.add('active');
+      spawnParticle(chipCPU, chipRAM, 'app', 700, 16);
+    }, 1500));
+    flowTimeouts.push(setTimeout(() => {
+      setStep(3);
+      coreLittle.classList.remove('active');
+      chipRAM.classList.remove('active');
+      chipNPU.classList.add('active');
+      activateTrace('cpuNpu');
+      spawnParticle(chipCPU, chipNPU, 'npu', 800, 18);
+    }, 2500));
+    flowTimeouts.push(setTimeout(() => {
+      setStep(4);
+      deactivateTrace('cpuNpu');
+      chipNPU.classList.remove('active');
+      chipModem.classList.add('active');
+      activateTrace('npuModem');
+      activateTrace('modemOut');
+      spawnParticle(chipNPU, chipModem, 'net', 700, 18);
+      setTimeout(() => spawnParticle(chipModem, soc, 'net', 900, 16), 300);
+    }, 3600));
+    flowTimeouts.push(setTimeout(() => {
+      setStep(5);
+      chipModem.classList.remove('active');
+      bubble2.classList.add('show');
+      activateTrace('return');
+    }, 4900));
+    flowTimeouts.push(setTimeout(() => {
+      stopFlow();
+      phoneScreen.classList.add('on');
+      bubble1.classList.add('show');
+      bubble2.classList.add('show');
+    }, 6200));
+  }
+  if (playBtn) playBtn.addEventListener('click', () => { if (isPlaying) stopFlow(); else playFlow(); });
+  if (resetBtn) resetBtn.addEventListener('click', () => { stopFlow(); setTimeout(() => playFlow(), 200); });
+
+  const socSlide = slides[11];
+  const obs = new MutationObserver(() => {
+    if (socSlide.classList.contains('active')) setTimeout(() => { if (!isPlaying) playFlow(); }, 700);
+  });
+  obs.observe(socSlide, { attributes:true, attributeFilter:['class'] });
+
+  const verifyOverlay = document.getElementById('verifyOverlay');
+  const verifyText = document.getElementById('verifyText');
+  const verifyResult = document.getElementById('verifyResult');
+  teacherBtn.addEventListener('click', () => { verifyOverlay.classList.add('show'); verifyResult.classList.remove('show'); });
+  document.getElementById('verifyClose').addEventListener('click', () => verifyOverlay.classList.remove('show'));
+  verifyOverlay.addEventListener('click', e => { if (e.target === verifyOverlay) verifyOverlay.classList.remove('show'); });
+  document.getElementById('verifyClear').addEventListener('click', () => {
+    verifyText.value = ''; verifyResult.classList.remove('show');
+    verifyResult.className = 'verify-result'; verifyText.focus();
+  });
+  document.getElementById('verifyExample').addEventListener('click', async () => {
+    const examplePayload = { m:MATERIA_NOMBRE, c:CLASE_NUMERO, n:'María González', cc:'12345678', p:17, a:6, f:'15/01/2026 10:30', d:[1,1,1,0,1,1,1] };
+    const enc = await encryptPayload(examplePayload);
+    const corto = generateToken('María González','12345678',17,6,'15/01/2026 10:30');
+    verifyText.value =
+`¡Hola! 🎓
+
+📝 *EVALUACIÓN · ARQUITECTURA MÓVIL ARM*
+🏫 Fundabit Isla de Coche
+👨‍🏫 Prof. Luis Vásquez
+
+📚 *Materia:* ${MATERIA_NOMBRE}
+🏫 *Clase:* ${CLASE_NUMERO}
+
+🧑 Nombre: *María González*
+🆔 Cédula: *12345678*
+
+🎯 Puntos: *17 / 20 pts*
+✅ Correctas: *6 de 7*
+📈 Porcentaje: *85%*
+👏 Estado: ¡Excelente!
+
+🕒 Fecha: 15/01/2026 10:30
+
+🔐 *CÓDIGO CORTO:*
+\`${corto}\`
+
+🔒 *TOKEN DE SEGURIDAD:*
+\`${enc}\`
+
+Enviado desde la clase interactiva ✨`;
+    verifyText.focus();
+  });
+  document.getElementById('verifyRun').addEventListener('click', async () => {
+    const raw = (verifyText.value || '').trim();
+    verifyResult.className = 'verify-result';
+    if (!raw){
+      verifyResult.classList.add('show','warn');
+      verifyResult.innerHTML = '<div class="result-title">⚠️ Mensaje vacío</div>Pega el mensaje primero.';
+      return;
+    }
+    const encMatch = raw.match(/TOKEN DE SEGURIDAD:?\*?\s*`?([A-Za-z0-9_\-]+)`?/i) || raw.match(/`([A-Za-z0-9_\-]{80,})`/);
+    if (!encMatch){
+      verifyResult.classList.add('show','warn');
+      verifyResult.innerHTML = '<div class="result-title">⚠️ No se encontró el token de seguridad</div><div class="result-data">Pega el mensaje completo con la sección "🔒 TOKEN DE SEGURIDAD".</div>';
+      return;
+    }
+    const datos = await decryptPayload(encMatch[1].trim());
+    if (!datos){
+      verifyResult.classList.add('show','fail');
+      verifyResult.innerHTML = '<div class="result-title">❌ TOKEN INVÁLIDO · Mensaje alterado</div><div class="result-data">No se pudo descifrar el token.\nEl mensaje fue modificado o la clave no coincide.</div>';
+      return;
+    }
+    const detalle = (datos.d || []).map((v,i) => (v===1 ? '✅ P'+(i+1) : '❌ P'+(i+1))).join('\n');
+    const valido = datos.m === MATERIA_NOMBRE && datos.c === CLASE_NUMERO && typeof datos.p === 'number';
+    verifyResult.classList.add('show', valido ? 'ok' : 'warn');
+    verifyResult.innerHTML =
+      '<div class="result-title">'+(valido ? '✅ MENSAJE VÁLIDO' : '⚠️ Datos con valores inesperados')+'</div>' +
+      '<div class="result-data">' +
+      '<b>📚 Materia:</b> '+(datos.m||'—')+'\n' +
+      '<b>🏫 Clase:</b> '+(datos.c||'—')+'\n\n' +
+      '<b>🧑 Nombre:</b> '+(datos.n||'—')+'\n' +
+      '<b>🆔 Cédula:</b> '+(datos.cc||'—')+'\n' +
+      '<b>🎯 Puntos:</b> '+(datos.p||0)+' / 20\n' +
+      '<b>✅ Aciertos:</b> '+(datos.a||0)+' de 7\n' +
+      '<b>🕒 Fecha:</b> '+(datos.f||'—')+'\n\n' +
+      '<b>📋 Detalle:</b>\n'+detalle+'</div>';
+  });
+
+  const waBtn = document.getElementById('waBtn');
+  waBtn.addEventListener('click', async () => {
+    waBtn.disabled = true;
+    try{
+      const nombre = (nameInput.value || '').trim() || 'Estudiante';
+      const cedula = (cedInput.value || '').trim() || 'sin cédula';
+      const puntos = calculatePoints();
+      const aciertos = countCorrect();
+      const pct = Math.round(puntos/TOTAL_POINTS*100);
+      let emoji, estado;
+      if (pct === 100){ emoji='🌟'; estado='¡PERFECTO!'; }
+      else if (pct >= 80){ emoji='👏'; estado='¡Excelente!'; }
+      else if (pct >= 60){ emoji='💪'; estado='Aprobado'; }
+      else if (pct >= 40){ emoji='📖'; estado='Necesito repasar'; }
+      else { emoji='🔁'; estado='Debo repasar más'; }
+      const fecha = buildFechaStr();
+      let detalle = '';
+      examAnswers.forEach((a,i) => {
+        const ok = a && a.correct ? '✅' : '❌';
+        const pts = (a && a.correct) ? QUESTION_POINTS[i] : 0;
+        detalle += ok+' P'+(i+1)+' ('+pts+' pts)\n';
+      });
+      const tokenCorto = generateToken(nombre, cedula, puntos, aciertos, fecha);
+      const tokenEnc = await generateEncryptedToken();
+      const texto =
+`¡Hola! 🎓
+
+📝 *EVALUACIÓN · ARQUITECTURA MÓVIL ARM*
+🏫 Fundabit Isla de Coche
+👨‍🏫 Prof. Luis Vásquez
+
+📚 *Materia:* ${MATERIA_NOMBRE}
+🏫 *Clase:* ${CLASE_NUMERO}
+
+🧑 Nombre: *${nombre}*
+🆔 Cédula: *${cedula}*
+
+🎯 Puntos: *${puntos} / ${TOTAL_POINTS} pts*
+✅ Correctas: *${aciertos} de ${TOTAL_QUESTIONS}*
+📈 Porcentaje: *${pct}%*
+${emoji} Estado: ${estado}
+
+📋 *Detalle:*
+${detalle}
+🕒 Fecha: ${fecha}
+
+🔐 *CÓDIGO CORTO:*
+\`${tokenCorto}\`
+
+🔒 *TOKEN DE SEGURIDAD:*
+\`${tokenEnc}\`
+
+Enviado desde la clase interactiva ✨`;
+      const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(texto);
+      window.open(url, '_blank');
+    } catch(e){
+      showToast('❌ Error generando el token cifrado');
+      console.error(e);
+    } finally {
+      waBtn.disabled = false;
+    }
+  });
+
+  function confetti(){
+    const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a06cd5','#5ee7df','#ffffff'];
+    for (let i = 0; i < 60; i++){
+      const p = document.createElement('div');
+      p.className = 'confetti';
+      p.style.left = Math.random()*100 + 'vw';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.width = (6+Math.random()*8)+'px';
+      p.style.height = (10+Math.random()*12)+'px';
+      p.style.animationDelay = (Math.random()*0.7)+'s';
+      p.style.animationDuration = (1.6+Math.random()*1.4)+'s';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3600);
+    }
+  }
+
+  if (hasStarted && savedIndex > 0){
+    goTo(savedIndex);
+    setTimeout(() => showToast('👋 ¡Bienvenido de nuevo!\nContinuando en la diapositiva '+(savedIndex+1)), 400);
+  } else {
+    goTo(0);
+    checkForm();
+  }
+
+  window.addEventListener('beforeunload', stopSpeaking);
+  window.addEventListener('pagehide', stopSpeaking);
+  if (isTeacherMode){
+    setTimeout(() => verifyOverlay.classList.add('show'), 500);
+  }
+})();
+</script>
+</body>
+</html>
